@@ -35,10 +35,10 @@ export const productService = {
         .from('products')
         .select('*, category:categories(*)')
         .eq('barcode', barcode)
-        .single();
+        .limit(1);
       
-      if (error && error.code !== 'PGRST116') throw error;
-      return data || null;
+      if (error) throw error;
+      return data && data.length > 0 ? data[0] : null;
     } catch (error) {
       console.error('Błąd podczas pobierania produktu po kodzie kreskowym:', error);
       return null;

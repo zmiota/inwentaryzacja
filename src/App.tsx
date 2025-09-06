@@ -3,6 +3,7 @@ import Layout from './components/ui/Layout';
 import InventoryList from './components/InventoryList';
 import PreliminaryInventory from './components/PreliminaryInventory';
 import FinalInventory from './components/FinalInventory';
+import { isSupabaseConfigured } from './lib/supabase';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('inventories');
@@ -72,6 +73,26 @@ function App() {
 
   return (
     <Layout currentPage={currentPage} onNavigate={handleNavigate}>
+      {!isSupabaseConfigured && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
+          <div className="flex">
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800">
+                Konfiguracja Supabase
+              </h3>
+              <div className="mt-2 text-sm text-yellow-700">
+                <p>
+                  Aby aplikacja działała poprawnie, skonfiguruj Supabase tworząc plik <code>.env</code> z:
+                </p>
+                <pre className="mt-2 text-xs bg-yellow-100 p-2 rounded">
+VITE_SUPABASE_URL=twój_supabase_url{'\n'}
+VITE_SUPABASE_ANON_KEY=twój_supabase_anon_key
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {renderCurrentPage()}
     </Layout>
   );

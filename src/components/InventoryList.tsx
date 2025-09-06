@@ -4,6 +4,7 @@ import { Inventory } from '../types';
 import { inventoryService } from '../services/inventoryService';
 import LoadingSpinner from './ui/LoadingSpinner';
 import Modal from './ui/Modal';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 interface InventoryListProps {
   onNavigate: (page: string, inventoryId?: string) => void;
@@ -26,12 +27,17 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
 
   const loadInventories = async () => {
     setLoading(true);
-    const data = await inventoryService.getAll();
+    const data = isSupabaseConfigured ? await inventoryService.getAll() : [];
     setInventories(data);
     setLoading(false);
   };
 
   const handleCreateInventory = async () => {
+    if (!isSupabaseConfigured) {
+      alert('Supabase nie jest skonfigurowany. Dodaj zmienne VITE_SUPABASE_URL i VITE_SUPABASE_ANON_KEY do pliku .env');
+      return;
+    }
+    
     const inventory = await inventoryService.create({
       ...newInventory,
       type: 'preliminary',

@@ -64,5 +64,20 @@ export const inventoryService = {
       console.error('Błąd podczas aktualizacji inwentaryzacji:', error);
       return null;
     }
+  },
+
+  async delete(id: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('inventories')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Błąd podczas usuwania inwentaryzacji:', error);
+      return false;
+    }
   }
 };

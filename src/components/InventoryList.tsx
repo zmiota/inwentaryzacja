@@ -51,6 +51,22 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
     }
   };
 
+  const handleDeleteInventory = async (id: string, name: string) => {
+    if (!isSupabaseConfigured) {
+      alert('Supabase nie jest skonfigurowany.');
+      return;
+    }
+
+    if (confirm(`Czy na pewno chcesz usunąć inwentaryzację "${name}"?\n\nTo działanie usunie również wszystkie powiązane dane (wpisy wstępne, końcowe, członków komisji) i nie może być cofnięte.`)) {
+      const success = await inventoryService.delete(id);
+      if (success) {
+        await loadInventories();
+      } else {
+        alert('Wystąpił błąd podczas usuwania inwentaryzacji.');
+      }
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
@@ -146,6 +162,13 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
                         title="Inwentaryzacja końcowa"
                       >
                         <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteInventory(inventory.id, inventory.name)}
+                        className="text-red-600 hover:text-red-900 p-2 rounded-md hover:bg-red-50 transition-colors"
+                        title="Usuń inwentaryzację"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </td>

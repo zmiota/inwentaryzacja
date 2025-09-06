@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Download, RefreshCw, Edit, Trash2, Save } from 'lucide-react';
+import { ArrowLeft, Plus, Download, RefreshCw, Edit, Trash2, Save, X } from 'lucide-react';
 import { FinalInventoryEntry, Inventory } from '../types';
 import { entryService } from '../services/entryService';
 import { inventoryService } from '../services/inventoryService';

@@ -47,6 +47,7 @@ export interface InventoryEntry {
   id: string;
   inventory_id: string;
   category_id: string;
+  pku_w?: string;
   product_name: string;
   unit: string;
   quantity: number;
@@ -55,10 +56,7 @@ export interface InventoryEntry {
   invoice_number?: string;
   barcode?: string;
   notes?: string;
-  barcode?: string;
-  notes?: string;
   created_at: string;
-  updated_at: string;
   updated_at: string;
 }
 

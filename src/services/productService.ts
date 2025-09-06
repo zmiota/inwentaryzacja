@@ -6,8 +6,13 @@ export const productService = {
     try {
       let queryBuilder = supabase
         .from('products')
-        .select('*, category:categories(*)')
-        .ilike('name', `%${query}%`)
+        .select('*, category:categories(*)');
+
+      if (query) {
+        queryBuilder = queryBuilder.or(`name.ilike.%${query}%,barcode.ilike.%${query}%`);
+      }
+
+      queryBuilder = queryBuilder
         .limit(10);
 
       if (categoryId) {
@@ -70,6 +75,21 @@ export const productService = {
     } catch (error) {
       console.error('Błąd podczas aktualizacji produktu:', error);
       return null;
+    }
+  },
+
+  async delete(id: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Błąd podczas usuwania produktu:', error);
+      return false;
     }
   }
 };

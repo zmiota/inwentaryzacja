@@ -12,6 +12,7 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
 
   const navigation = [
     { id: 'inventories', label: 'Inwentaryzacje', icon: Package },
+    { id: 'products', label: 'Produkty', icon: Package },
     { id: 'preliminary', label: 'Inwentaryzacja wstępna', icon: FileText },
     { id: 'final', label: 'Inwentaryzacja końcowa', icon: FileText },
     { id: 'export', label: 'Eksport', icon: Download }

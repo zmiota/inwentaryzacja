@@ -22,6 +22,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   const [showOCRModal, setShowOCRModal] = useState(false);
   const [productSuggestions, setProductSuggestions] = useState<Product[]>([]);
   const [newEntry, setNewEntry] = useState({
+    pku_w: '',
     product_name: '',
     unit: 'szt',
     quantity: 0,
@@ -59,7 +60,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   const handleProductNameChange = async (value: string) => {
     setNewEntry({...newEntry, product_name: value});
     
-    if (value.length >= 3) {
+    if (value.length >= 2) {
       const suggestions = await productService.search(value, selectedCategory);
       setProductSuggestions(suggestions);
     } else {
@@ -93,6 +94,14 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     }
   };
 
+  const handleBarcodeOrNameSearch = async (value: string) => {
+    if (value.length >= 2) {
+      const suggestions = await productService.search(value);
+      setProductSuggestions(suggestions);
+    } else {
+      setProductSuggestions([]);
+    }
+  };
   const handleSubmitEntry = async () => {
     if (!newEntry.product_name || !selectedCategory) return;
 
@@ -119,6 +128,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
       setShowAddModal(false);
       setNewEntry({
+        pku_w: '',
         product_name: '',
         unit: 'szt',
         quantity: 0,
@@ -216,6 +226,9 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  PKU i W
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Nazwa produktu
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -242,6 +255,9 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
               {entries.map((entry) => (
                 <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900">{entry.pku_w || '-'}</div>
+                  </td>
+                  <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">{entry.product_name}</div>
                     {entry.barcode && (
                       <div className="flex items-center space-x-1 text-xs text-gray-500">
@@ -266,19 +282,29 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
                     {entry.invoice_number || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex justify-end space-x-1">
+                      <button
+                        onClick={() => {/* TODO: Implement edit */}}
+                        className="text-blue-600 hover:text-blue-900 p-2 rounded-md hover:bg-blue-50 transition-colors"
+                        title="Edytuj wpis"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
                     <button
                       onClick={() => handleDeleteEntry(entry.id)}
                       className="text-red-600 hover:text-red-900 p-2 rounded-md hover:bg-red-50 transition-colors"
+                        title="Usuń wpis"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
             <tfoot className="bg-gray-50">
               <tr>
-                <td colSpan={4} className="px-6 py-3 text-sm font-medium text-gray-900 text-right">
+                <td colSpan={5} className="px-6 py-3 text-sm font-medium text-gray-900 text-right">
                   Suma wartości netto:
                 </td>
                 <td className="px-6 py-3 text-sm font-bold text-gray-900">
@@ -307,6 +333,19 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
         size="lg"
       >
         <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              PKU i W (opcjonalne)
+            </label>
+            <input
+              type="text"
+              value={newEntry.pku_w}
+              onChange={(e) => setNewEntry({...newEntry, pku_w: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Kod PKU i W"
+            />
+          </div>
+
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Nazwa produktu *
@@ -314,9 +353,12 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
             <input
               type="text"
               value={newEntry.product_name}
-              onChange={(e) => handleProductNameChange(e.target.value)}
+              onChange={(e) => {
+                setNewEntry({...newEntry, product_name: e.target.value});
+                handleBarcodeOrNameSearch(e.target.value);
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Wpisz nazwę produktu..."
+              placeholder="Wpisz nazwę produktu lub kod kreskowy..."
             />
             
             {productSuggestions.length > 0 && (
@@ -329,6 +371,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
                   >
                     <div className="font-medium">{product.name}</div>
                     <div className="text-xs text-gray-500">
+                      {product.barcode && `${product.barcode} • `}
                       {product.unit} • {product.net_price?.toFixed(2) || '0.00'} zł
                     </div>
                   </button>
@@ -361,7 +404,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Kod kreskowy (skanuj lub wpisz)
+                Kod kreskowy
               </label>
               <input
                 type="text"
@@ -369,9 +412,10 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
                 onChange={(e) => {
                   setNewEntry({...newEntry, barcode: e.target.value});
                   handleBarcodeInput(e.target.value);
+                  handleBarcodeOrNameSearch(e.target.value);
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Skaner działa jak klawiatura"
+                placeholder="Kod kreskowy produktu"
               />
             </div>
           </div>

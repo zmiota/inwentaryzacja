@@ -4,6 +4,7 @@ import InventoryList from './components/InventoryList';
 import ProductManagement from './components/ProductManagement';
 import PreliminaryInventory from './components/PreliminaryInventory';
 import FinalInventory from './components/FinalInventory';
+import TestPDF from './components/TestPDF';
 import { isSupabaseConfigured } from './lib/supabase';
 
 function App() {
@@ -59,15 +60,7 @@ function App() {
         );
       case 'export':
         return (
-          <div className="text-center py-12">
-            <p className="text-gray-500">Eksport dostępny w sekcji Inwentaryzacja końcowa</p>
-            <button
-              onClick={() => setCurrentPage('inventories')}
-              className="mt-4 text-blue-600 hover:text-blue-800"
-            >
-              Powróć do listy inwentaryzacji
-            </button>
-          </div>
+          <TestPDF />
         );
       default:
         return <InventoryList onNavigate={handleNavigate} />;

@@ -1,13 +1,5 @@
 import React from 'react';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
-
-// Extend jsPDF type to include autoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
 
 export default function TestPDF() {
   const generateTestPDF = () => {
@@ -18,27 +10,12 @@ export default function TestPDF() {
       doc.setFontSize(16);
       doc.text('Test PDF Generation', 20, 20);
       
-      // Test autoTable
-      const tableData = [
-        ['Product 1', '10', '5.00', '50.00'],
-        ['Product 2', '5', '10.00', '50.00'],
-        ['Product 3', '2', '25.00', '50.00']
-      ];
+      doc.setFontSize(12);
+      doc.text('To jest test generowania PDF bez tabel', 20, 40);
+      doc.text('Jeśli widzisz ten tekst, jsPDF działa poprawnie', 20, 60);
       
-      doc.autoTable({
-        head: [['Product', 'Quantity', 'Price', 'Total']],
-        body: tableData,
-        startY: 40,
-        styles: {
-          fontSize: 10,
-          cellPadding: 3,
-        },
-        headStyles: {
-          fillColor: [66, 139, 202],
-          textColor: 255,
-          fontStyle: 'bold'
-        }
-      });
+      doc.setFontSize(10);
+      doc.text('Data: ' + new Date().toLocaleDateString('pl-PL'), 20, 80);
       
       doc.save('test.pdf');
       alert('PDF wygenerowany pomyślnie!');
@@ -51,11 +28,14 @@ export default function TestPDF() {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Test generowania PDF</h1>
+      <p className="mb-4 text-gray-600">
+        Ten test sprawdza podstawowe generowanie PDF bez użycia tabel.
+      </p>
       <button
         onClick={generateTestPDF}
         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
       >
-        Wygeneruj testowy PDF
+        Wygeneruj prosty PDF
       </button>
     </div>
   );

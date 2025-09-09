@@ -1,9 +1,6 @@
 import { FinalInventoryEntry, Inventory, CommissionMember } from '../types';
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-
-// Register the autoTable plugin
-autoTable(jsPDF);
+import 'jspdf-autotable';
 
 export const exportService = {
   async exportToPDF(inventory: Inventory, entries: FinalInventoryEntry[], commission: CommissionMember[]): Promise<void> {

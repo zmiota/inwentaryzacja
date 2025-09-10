@@ -20,6 +20,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showOCRModal, setShowOCRModal] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<InventoryEntry | null>(null);
   const [productSuggestions, setProductSuggestions] = useState<Product[]>([]);
   const [newEntry, setNewEntry] = useState({
     pku_w: '',
@@ -102,14 +103,37 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       setProductSuggestions([]);
     }
   };
+
+  const handleEditEntry = (entry: InventoryEntry) => {
+    setEditingEntry(entry);
+    setNewEntry({
+      pku_w: entry.pku_w || '',
+      product_name: entry.product_name,
+      unit: entry.unit,
+      quantity: entry.quantity,
+      net_price: entry.net_price,
+      invoice_number: entry.invoice_number || '',
+      barcode: entry.barcode || '',
+      notes: entry.notes || ''
+    });
+    setShowAddModal(true);
+  };
+
   const handleSubmitEntry = async () => {
     if (!newEntry.product_name || !selectedCategory) return;
 
-    const entry = await entryService.createPreliminaryEntry({
-      inventory_id: inventoryId,
-      category_id: selectedCategory,
-      ...newEntry
-    });
+    let entry;
+    if (editingEntry) {
+      // Aktualizuj istniejący wpis
+      entry = await entryService.updatePreliminaryEntry(editingEntry.id, newEntry);
+    } else {
+      // Utwórz nowy wpis
+      entry = await entryService.createPreliminaryEntry({
+        inventory_id: inventoryId,
+        category_id: selectedCategory,
+        ...newEntry
+      });
+    }
 
     if (entry) {
       // Sprawdź czy produkt istnieje, jeśli nie - utwórz
@@ -127,6 +151,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       }
 
       setShowAddModal(false);
+      setEditingEntry(null);
       setNewEntry({
         pku_w: '',
         product_name: '',
@@ -284,7 +309,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-1">
                       <button
-                        onClick={() => {/* TODO: Implement edit */}}
+                        onClick={() => handleEditEntry(entry)}
                         className="text-blue-600 hover:text-blue-900 p-2 rounded-md hover:bg-blue-50 transition-colors"
                         title="Edytuj wpis"
                       >
@@ -329,7 +354,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Dodaj produkt do inwentaryzacji"
+        title={editingEntry ? "Edytuj wpis w inwentaryzacji" : "Dodaj produkt do inwentaryzacji"}
         size="lg"
       >
         <div className="space-y-4">
@@ -491,7 +516,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
               disabled={!newEntry.product_name}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Dodaj do inwentaryzacji
+              {editingEntry ? "Zapisz zmiany" : "Dodaj do inwentaryzacji"}
             </button>
           </div>
         </div>

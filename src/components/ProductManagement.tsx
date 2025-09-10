@@ -17,6 +17,7 @@ export default function ProductManagement() {
   const [newProduct, setNewProduct] = useState({
     name: '',
     barcode: '',
+    pku_w: '',
     unit: 'szt',
     net_price: 0,
     category_id: ''
@@ -80,6 +81,7 @@ export default function ProductManagement() {
     setNewProduct({
       name: product.name,
       barcode: product.barcode || '',
+      pku_w: '', // PKU nie jest jeszcze w bazie, więc domyślnie puste
       unit: product.unit,
       net_price: product.net_price || 0,
       category_id: product.category_id || ''
@@ -91,6 +93,7 @@ export default function ProductManagement() {
     setNewProduct({
       name: '',
       barcode: '',
+      pku_w: '',
       unit: 'szt',
       net_price: 0,
       category_id: categories.length > 0 ? categories[0].id : ''
@@ -185,6 +188,9 @@ export default function ProductManagement() {
                   Nazwa produktu
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  PKU i W
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Kod kreskowy
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -206,6 +212,10 @@ export default function ProductManagement() {
                 <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {/* PKU nie jest jeszcze w bazie danych, więc pokazujemy placeholder */}
+                    <span className="text-gray-400">-</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {product.barcode ? (
@@ -289,6 +299,19 @@ export default function ProductManagement() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                PKU i W (opcjonalne)
+              </label>
+              <input
+                type="text"
+                value={newProduct.pku_w}
+                onChange={(e) => setNewProduct({...newProduct, pku_w: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Kod PKU i W"
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Kod kreskowy

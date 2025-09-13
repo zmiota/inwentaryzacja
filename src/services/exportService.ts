@@ -9,6 +9,7 @@ export const exportService = {
       
       // Tabela z danymi
       const tableData = entries.map((entry, index) => [
+        (index + 1).toString(), // Lp
         entry.pku_w || '',
         entry.product_name,
         entry.unit,
@@ -20,15 +21,15 @@ export const exportService = {
       // Dodaj wiersz z sumą
       const totalValue = entries.reduce((sum, entry) => sum + entry.net_value, 0);
       tableData.push([
-        '', '', '', '', 'SUMA:', `${totalValue.toFixed(2)} zł`
+        '', '', '', '', '', 'SUMA:', `${totalValue.toFixed(2)} zł`
       ]);
       
       autoTable(doc, {
-        head: [['PKU i W', 'Nazwa produktu', 'J.m.', 'Ilość', 'Cena netto', 'Wartość netto']],
+        head: [['Lp', 'PKU i W', 'Nazwa produktu', 'J.m.', 'Ilość', 'Cena netto', 'Wartość netto']],
         body: tableData,
         startY: 20,
         styles: {
-          fontSize: 10,
+          fontSize: 8,
           cellPadding: 2,
         },
         headStyles: {
@@ -37,12 +38,13 @@ export const exportService = {
           fontStyle: 'bold'
         },
         columnStyles: {
-          0: { cellWidth: 25 },
-          1: { cellWidth: 70 },
-          2: { halign: 'center', cellWidth: 20 },
-          3: { halign: 'right', cellWidth: 25 },
-          4: { halign: 'right', cellWidth: 30 },
-          5: { halign: 'right', cellWidth: 30 }
+          0: { halign: 'center', cellWidth: 15 }, // Lp
+          1: { cellWidth: 20 }, // PKU i W
+          2: { cellWidth: 60 }, // Nazwa produktu
+          3: { halign: 'center', cellWidth: 15 }, // J.m.
+          4: { halign: 'right', cellWidth: 20 }, // Ilość
+          5: { halign: 'right', cellWidth: 25 }, // Cena netto
+          6: { halign: 'right', cellWidth: 30 } // Wartość netto
         },
         didParseCell: function(data) {
           // Pogrub ostatni wiersz (suma)

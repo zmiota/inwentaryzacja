@@ -10,12 +10,20 @@ export const exportService = {
   ): Promise<void> {
     try {
       const doc = new jsPDF();
-
+      
+      // Włącz obsługę unicode i ustaw font obsługujący polskie znaki
+      doc.addFont('https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.ttf', 'Roboto', 'normal');
+      doc.setFont('Roboto');
+      
+      // Alternatywnie, możesz użyć wbudowanego fontu z obsługą unicode:
+      // doc.setFont('helvetica');
+      
       // --- Nagłówek (pierwsza linia na środku) ---
       doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('Roboto', 'bold');
+      const title = `Inwentaryzacja końcowa - ${inventory.name}`;
       doc.text(
-        `Inwentaryzacja końcowa - ${inventory.name}`,
+        title,
         doc.internal.pageSize.getWidth() / 2,
         15,
         { align: 'center' }
@@ -23,14 +31,16 @@ export const exportService = {
 
       // --- Dwa pola tekstowe pod nagłówkiem ---
       doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('Roboto', 'normal');
 
       // Lewa strona
-      doc.text(`Data: ${new Date().toLocaleDateString()}`, 14, 25);
+      const dateText = `Data: ${new Date().toLocaleDateString('pl-PL')}`;
+      doc.text(dateText, 14, 25);
 
       // Prawa strona
+      const commissionText = `Komisja: ${commission.map(c => c.name).join(', ')}`;
       doc.text(
-        `Komisja: ${commission.map(c => c.name).join(', ')}`,
+        commissionText,
         doc.internal.pageSize.getWidth() - 14,
         25,
         { align: 'right' }
@@ -60,11 +70,13 @@ export const exportService = {
           cellPadding: 2,
           lineWidth: 0.1,
           lineColor: [0, 0, 0],
+          font: 'Roboto', // Ustaw font dla całej tabeli
         },
         headStyles: {
           fillColor: [66, 139, 202],
           textColor: 255,
           fontStyle: 'bold',
+          font: 'Roboto',
         },
         columnStyles: {
           0: { halign: 'center', cellWidth: 8 },  // Lp
@@ -72,22 +84,24 @@ export const exportService = {
           2: { cellWidth: 60 },                   // Nazwa produktu
           3: { halign: 'center', cellWidth: 10 }, // J.m.
           4: { halign: 'center', cellWidth: 10 }, // Ilość
-          5: { halign: 'left', cellWidth: 40 },   // Cena netto
-          6: { halign: 'left', cellWidth: 40 },   // Wartość netto
+          5: { halign: 'right', cellWidth: 40 },  // Cena netto
+          6: { halign: 'right', cellWidth: 40 },  // Wartość netto
         },
         didParseCell: function (data) {
           if (data.row.index === tableData.length - 1) {
             data.cell.styles.fontStyle = 'bold';
             data.cell.styles.fillColor = [220, 220, 220];
+            data.cell.styles.font = 'Roboto';
           }
         },
       });
-
+      
       // --- Pola pod tabelą ---
       const finalY = (doc as any).lastAutoTable.finalY || 40; // pozycja końca tabeli
       const margin = 14;
 
       doc.setFontSize(10);
+      doc.setFont('Roboto', 'normal');
 
       // Pole po lewej
       doc.text('Podpis przewodniczącego komisji', margin, finalY + 20);

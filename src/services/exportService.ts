@@ -3,10 +3,14 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 export const exportService = {
-  async exportToPDF(inventory: Inventory, entries: FinalInventoryEntry[], commission: CommissionMember[]): Promise<void> {
+  async exportToPDF(
+    inventory: Inventory,
+    entries: FinalInventoryEntry[],
+    commission: CommissionMember[]
+  ): Promise<void> {
     try {
       const doc = new jsPDF();
-      
+
       // --- Nagłówek (pierwsza linia na środku) ---
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
@@ -78,6 +82,7 @@ export const exportService = {
           }
         },
       });
+
       // --- Pola pod tabelą ---
       const finalY = (doc as any).lastAutoTable.finalY || 40; // pozycja końca tabeli
       const margin = 14;
@@ -95,14 +100,30 @@ export const exportService = {
         { align: 'right' }
       );
 
-      
-      // Zapisz plik
+      // --- Zapisz plik ---
       const fileName = `inwentaryzacja_koncowa_${inventory.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
       doc.save(fileName);
-      
     } catch (error) {
       console.error('Błąd podczas eksportu do PDF:', error);
       throw error;
+    }
+  },
+
+  async exportToExcel(inventory: Inventory, entries: FinalInventoryEntry[]): Promise<void> {
+    try {
+      const csvContent = this.generateCSV(entries);
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+
+      link.setAttribute('href', url);
+      link.setAttribute('download', `inwentaryzacja_${inventory.name}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Błąd podczas eksportu do Excel:', error);
     }
   },
 

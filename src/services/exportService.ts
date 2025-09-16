@@ -78,6 +78,22 @@ export const exportService = {
           }
         },
       });
+      // --- Pola pod tabelą ---
+      const finalY = (doc as any).lastAutoTable.finalY || 40; // pozycja końca tabeli
+      const margin = 14;
+
+      doc.setFontSize(10);
+
+      // Pole po lewej
+      doc.text('Podpis przewodniczącego komisji', margin, finalY + 20);
+
+      // Pole po prawej
+      doc.text(
+        'Podpis członka komisji',
+        doc.internal.pageSize.getWidth() - margin,
+        finalY + 20,
+        { align: 'right' }
+      );
 
       
       // Zapisz plik

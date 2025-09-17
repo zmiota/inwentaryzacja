@@ -34,17 +34,29 @@ export const exportService = {
       doc.setFont('Roboto', 'normal');
 
       // Lewa strona
-      const dateText = `Data: ${new Date().toLocaleDateString('pl-PL')}`;
-      doc.text(dateText, 14, 25);
+      const commissionText = `Skład komisji inwentaryzacyjnej \n.....................................\n.....................................\n..................................... : ${commission.map(c => c.name).join(', ')}`;
+      doc.text(commissionText, 14, 25);
+
+      const datastart = `Spis rozpoczęto dn ................... o godz ...................`;
+      doc.text(datastart, 14, 30);
 
       // Prawa strona
-      const commissionText = `Komisja: ${commission.map(c => c.name).join(', ')}`;
-      doc.text(
-        commissionText,
-        doc.internal.pageSize.getWidth() - 14,
-        25,
-        { align: 'right' }
-      );
+      const rinwente = `Rodzaj inwentaryzacji - .....................................\nSposób przeprowadzenia - .....................................`;
+const lines = doc.splitTextToSize(rinwente, 180);
+doc.text(
+  lines,
+  doc.internal.pageSize.getWidth() - 14,
+  25,
+  { align: 'right' }
+);
+      const datakoniec = `Spis zakończono dn ................... o godz ...................`;
+      const lines2 = doc.splitTextToSize(datakoniec, 180);
+doc.text(
+  lines2,
+  doc.internal.pageSize.getWidth() - 14,
+  30,
+  { align: 'right' }
+  );
 
       // --- Tabela z danymi ---
       const tableData = entries.map((entry, index) => [

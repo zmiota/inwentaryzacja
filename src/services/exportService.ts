@@ -116,11 +116,11 @@ doc.text(
       doc.setFont('Roboto', 'normal');
 
       // Pole po lewej
-      doc.text('Podpis przewodniczącego komisji', margin, finalY + 20);
+      doc.text('Podpis osoby materiał: \n Wycenił(imię nazwisko)..................................(podpis)..................................\nPodpis osoby materiał: \n Wycenił(imię nazwisko)..................................(podpis)..................................(', margin, finalY + 20);
 
       // Pole po prawej
       doc.text(
-        'Podpis członka komisji',
+        'Skład komisji inwentaryzacyjnej \n Przewodniczący.....................................\nCzłonkowie: Izabela Pawłowska (imię i nazwisko)\n Podpis.....................................\Członkowie: Paweł Pawłowski (imię i nazwisko)\n Podpis.....................................',
         doc.internal.pageSize.getWidth() - margin,
         finalY + 20,
         { align: 'right' }

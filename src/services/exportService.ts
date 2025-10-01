@@ -9,7 +9,14 @@ export const exportService = {
     commission: CommissionMember[]
   ): Promise<void> {
     try {
-      const doc = new jsPDF();
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      // Ustaw font obsługujący polskie znaki
+      doc.setFont('helvetica');
       
       // Włącz obsługę unicode i ustaw font obsługujący polskie znaki
       doc.addFont('https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.ttf', 'Roboto', 'normal');
@@ -81,6 +88,7 @@ doc.text(
           fontSize: 8,
           cellPadding: 2,
           lineWidth: 0.1,
+          font: 'helvetica'
           lineColor: [0, 0, 0],
           font: 'Roboto', // Ustaw font dla całej tabeli
         },
@@ -88,6 +96,7 @@ doc.text(
           fillColor: [66, 139, 202],
           textColor: 255,
           fontStyle: 'bold',
+          font: 'helvetica'
           font: 'Roboto',
         },
         columnStyles: {

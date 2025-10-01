@@ -86,7 +86,6 @@ doc.text(
           lineWidth: 0.1,
           lineColor: [0, 0, 0],
           font: 'helvetica'
-          font: 'helvetica'
         },
         headStyles: {
           fillColor: [66, 139, 202],

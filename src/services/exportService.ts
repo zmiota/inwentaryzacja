@@ -18,13 +18,6 @@ export const exportService = {
       // Ustaw font obsługujący polskie znaki
       doc.setFont('helvetica');
       
-      // Włącz obsługę unicode i ustaw font obsługujący polskie znaki
-      doc.addFont('https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.ttf', 'Roboto', 'normal');
-      doc.setFont('Roboto');
-      
-      // Alternatywnie, możesz użyć wbudowanego fontu z obsługą unicode:
-      // doc.setFont('helvetica');
-      
       // --- Nagłówek (pierwsza linia na środku) ---
       doc.setFontSize(14);
       doc.setFont('Roboto', 'bold');

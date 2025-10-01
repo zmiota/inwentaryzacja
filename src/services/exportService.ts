@@ -88,16 +88,15 @@ doc.text(
           fontSize: 8,
           cellPadding: 2,
           lineWidth: 0.1,
-          font: 'helvetica'
+          font: 'helvetica',
           lineColor: [0, 0, 0],
-          font: 'Roboto', // Ustaw font dla całej tabeli
+          font: 'helvetica'
         },
         headStyles: {
           fillColor: [66, 139, 202],
           textColor: 255,
           fontStyle: 'bold',
           font: 'helvetica'
-          font: 'Roboto',
         },
         columnStyles: {
           0: { halign: 'center', cellWidth: 8 },  // Lp

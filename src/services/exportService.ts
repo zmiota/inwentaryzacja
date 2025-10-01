@@ -12,11 +12,14 @@ export const exportService = {
       const doc = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: 'a4'
+        format: 'a4',
+        putOnlyUsedFonts: true,
+        compress: true
       });
       
-      // Ustaw font obsługujący polskie znaki
-      doc.setFont('helvetica');
+      // Dodaj obsługę polskich znaków
+      doc.setFont('helvetica', 'normal');
+      doc.setLanguage('pl');
       
       // --- Nagłówek (pierwsza linia na środku) ---
       doc.setFontSize(14);
@@ -61,8 +64,8 @@ doc.text(
       // --- Tabela z danymi ---
       const tableData = entries.map((entry, index) => [
         (index + 1).toString(), // Lp
-        entry.pku_w || '',
-        entry.product_name,
+        entry.pku_w || '-',
+        this.encodePolishText(entry.product_name),
         entry.unit,
         entry.quantity.toString(),
         `${entry.net_price.toFixed(2)} zł`,
@@ -71,18 +74,18 @@ doc.text(
 
       // Dodaj wiersz z sumą
       const totalValue = entries.reduce((sum, entry) => sum + entry.net_value, 0);
-      tableData.push(['', '', '', '', '', 'SUMA:', `${totalValue.toFixed(2)} zł`]);
+      tableData.push(['', '', '', '', '', 'SUMA NETTO:', `${totalValue.toFixed(2)} zł`]);
 
       autoTable(doc, {
-        head: [['Lp', 'PKU i W', 'Nazwa produktu', 'J.m.', 'Ilość', 'Cena netto', 'Wartość netto']],
+        head: [['Lp', 'PKU i W', 'Nazwa produktu', 'J.m.', 'Ilosc', 'Cena netto', 'Wartosc netto']],
         body: tableData,
         startY: 35,
         styles: {
           fontSize: 8,
           cellPadding: 2,
           lineWidth: 0.1,
-          font: 'helvetica',
           lineColor: [0, 0, 0],
+          font: 'helvetica'
           font: 'helvetica'
         },
         headStyles: {
@@ -136,6 +139,17 @@ doc.text(
     }
   },
 
+  // Funkcja do konwersji polskich znaków na bezpieczne dla PDF
+  encodePolishText(text: string): string {
+    if (!text) return '';
+    
+    const polishChars: { [key: string]: string } = {
+      'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',
+      'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ź': 'Z', 'Ż': 'Z'
+    };
+    
+    return text.replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, (match) => polishChars[match] || match);
+  },
   async exportToExcel(inventory: Inventory, entries: FinalInventoryEntry[]): Promise<void> {
     try {
       const csvContent = this.generateCSV(entries);

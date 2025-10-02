@@ -17,14 +17,10 @@ export const exportService = {
         compress: true
       });
       
-      // Dodaj obsługę polskich znaków
-      doc.setFont('helvetica', 'normal');
-      doc.setLanguage('pl');
-      
       // --- Nagłówek (pierwsza linia na środku) ---
       doc.setFontSize(14);
-      doc.setFont('Roboto', 'bold');
-      const title = `Inwentaryzacja końcowa - ${inventory.name}`;
+      doc.setFont('helvetica', 'bold');
+      const title = `Inwentaryzacja koncowa - ${inventory.name}`;
       doc.text(
         title,
         doc.internal.pageSize.getWidth() / 2,
@@ -34,17 +30,17 @@ export const exportService = {
 
       // --- Dwa pola tekstowe pod nagłówkiem ---
       doc.setFontSize(10);
-      doc.setFont('Roboto', 'normal');
+      doc.setFont('helvetica', 'normal');
 
       // Lewa strona
-      const commissionText = `Skład komisji inwentaryzacyjnej \n.....................................\n.....................................\n..................................... : ${commission.map(c => c.name).join(', ')}`;
+      const commissionText = `Sklad komisji inwentaryzacyjnej \n.....................................\n.....................................\n..................................... : ${commission.map(c => c.name).join(', ')}`;
       doc.text(commissionText, 14, 25);
 
-      const datastart = `Spis rozpoczęto dn ................... o godz ...................`;
+      const datastart = `Spis rozpoczeto dn ................... o godz ...................`;
       doc.text(datastart, 14, 30);
 
       // Prawa strona
-      const rinwente = `Rodzaj inwentaryzacji - .....................................\nSposób przeprowadzenia - .....................................`;
+      const rinwente = `Rodzaj inwentaryzacji - .....................................\nSposob przeprowadzenia - .....................................`;
 const lines = doc.splitTextToSize(rinwente, 180);
 doc.text(
   lines,
@@ -52,7 +48,7 @@ doc.text(
   25,
   { align: 'right' }
 );
-      const datakoniec = `Spis zakończono dn ................... o godz ...................`;
+      const datakoniec = `Spis zakonczono dn ................... o godz ...................`;
       const lines2 = doc.splitTextToSize(datakoniec, 180);
 doc.text(
   lines2,
@@ -65,16 +61,16 @@ doc.text(
       const tableData = entries.map((entry, index) => [
         (index + 1).toString(), // Lp
         entry.pku_w || '-',
-        this.encodePolishText(entry.product_name),
+        this.encodePolishText(entry.product_name || ''),
         entry.unit,
         entry.quantity.toString(),
-        `${entry.net_price.toFixed(2)} zł`,
-        `${entry.net_value.toFixed(2)} zł`,
+        `${entry.net_price.toFixed(2)} zl`,
+        `${entry.net_value.toFixed(2)} zl`,
       ]);
 
       // Dodaj wiersz z sumą
       const totalValue = entries.reduce((sum, entry) => sum + entry.net_value, 0);
-      tableData.push(['', '', '', '', '', 'SUMA NETTO:', `${totalValue.toFixed(2)} zł`]);
+      tableData.push(['', '', '', '', '', 'SUMA NETTO:', `${totalValue.toFixed(2)} zl`]);
 
       autoTable(doc, {
         head: [['Lp', 'PKU i W', 'Nazwa produktu', 'J.m.', 'Ilosc', 'Cena netto', 'Wartosc netto']],
@@ -106,24 +102,23 @@ doc.text(
           if (data.row.index === tableData.length - 1) {
             data.cell.styles.fontStyle = 'bold';
             data.cell.styles.fillColor = [220, 220, 220];
-            data.cell.styles.font = 'Roboto';
           }
         },
       });
-      
+
       // --- Pola pod tabelą ---
       const finalY = (doc as any).lastAutoTable.finalY || 40; // pozycja końca tabeli
       const margin = 14;
 
       doc.setFontSize(10);
-      doc.setFont('Roboto', 'normal');
+      doc.setFont('helvetica', 'normal');
 
       // Pole po lewej
-      doc.text('Podpis osoby materiał: \n Wycenił(imię nazwisko)..................................(podpis)..................................\nPodpis osoby materiał: \n Wycenił(imię nazwisko)..................................(podpis)..................................(', margin, finalY + 20);
+      doc.text('Podpis osoby material: \n Wycenil(imie nazwisko)..................................(podpis)..................................\nPodpis osoby material: \n Wycenil(imie nazwisko)..................................(podpis)..................................(', margin, finalY + 20);
 
       // Pole po prawej
       doc.text(
-        'Skład komisji inwentaryzacyjnej \n Przewodniczący.....................................\nCzłonkowie: Izabela Pawłowska (imię i nazwisko)\n Podpis.....................................\Członkowie: Paweł Pawłowski (imię i nazwisko)\n Podpis.....................................',
+        'Sklad komisji inwentaryzacyjnej \n Przewodniczacy.....................................\nCzlonkowie: Izabela Pawlowska (imie i nazwisko)\n Podpis.....................................\Czlonkowie: Pawel Pawlowski (imie i nazwisko)\n Podpis.....................................',
         doc.internal.pageSize.getWidth() - margin,
         finalY + 20,
         { align: 'right' }
@@ -138,21 +133,20 @@ doc.text(
     }
   },
 
-  // Funkcja do konwersji polskich znaków na bezpieczne dla PDF
   encodePolishText(text: string): string {
     if (!text) return '';
-    
+
     const polishChars: { [key: string]: string } = {
       'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',
       'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ź': 'Z', 'Ż': 'Z'
     };
-    
+
     return text.replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, (match) => polishChars[match] || match);
   },
   async exportToExcel(inventory: Inventory, entries: FinalInventoryEntry[]): Promise<void> {
     try {
       const csvContent = this.generateCSV(entries);
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
 
@@ -163,33 +157,14 @@ doc.text(
       link.click();
       document.body.removeChild(link);
     } catch (error) {
-      console.error('Błąd podczas eksportu do Excel:', error);
-    }
-  },
-
-  async exportToExcel(inventory: Inventory, entries: FinalInventoryEntry[]): Promise<void> {
-    try {
-      // W rzeczywistej implementacji używałby biblioteki jak SheetJS
-      const csvContent = this.generateCSV(entries);
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      
-      link.setAttribute('href', url);
-      link.setAttribute('download', `inwentaryzacja_${inventory.name}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error('Błąd podczas eksportu do Excel:', error);
+      console.error('Blad podczas eksportu do Excel:', error);
     }
   },
 
   generateCSV(entries: FinalInventoryEntry[]): string {
-    const headers = ['Lp', 'PKU i W', 'Nazwa produktu', 'J.m.', 'Ilość', 'Cena netto', 'Wartość netto'];
+    const headers = ['Lp', 'PKU i W', 'Nazwa produktu', 'J.m.', 'Ilosc', 'Cena netto', 'Wartosc netto'];
     const csvRows = [headers.join(',')];
-    
+
     entries.forEach(entry => {
       const row = [
         entry.row_number,
@@ -205,7 +180,7 @@ doc.text(
 
     const totalValue = entries.reduce((sum, entry) => sum + entry.net_value, 0);
     csvRows.push('');
-    csvRows.push(`"SUMA WARTOŚCI NETTO:",${totalValue.toFixed(2)}`);
+    csvRows.push(`"SUMA WARTOSCI NETTO:",${totalValue.toFixed(2)}`);
 
     return csvRows.join('\n');
   }

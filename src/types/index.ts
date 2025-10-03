@@ -5,18 +5,6 @@ export interface Category {
   created_at: string;
 }
 
-export interface Product {
-  id: string;
-  name: string;
-  barcode?: string;
-  unit: string;
-  net_price?: number;
-  category_id?: string;
-  created_at: string;
-  updated_at: string;
-  category?: Category;
-}
-
 export interface Inventory {
   id: string;
   name: string;
@@ -33,16 +21,6 @@ export interface Inventory {
   updated_at: string;
 }
 
-export interface CommissionMember {
-  id: string;
-  inventory_id: string;
-  name: string;
-  role: 'chairman' | 'member';
-  is_present: boolean;
-  signature_position?: string;
-  created_at: string;
-}
-
 export interface InventoryEntry {
   id: string;
   inventory_id: string;
@@ -54,8 +32,6 @@ export interface InventoryEntry {
   net_price: number;
   net_value: number;
   invoice_number?: string;
-  barcode?: string;
-  notes?: string;
   created_at: string;
   updated_at: string;
 }
@@ -64,6 +40,7 @@ export interface FinalInventoryEntry {
   id: string;
   inventory_id: string;
   sequence_number: number;
+  row_number: number;
   pku_w?: string;
   product_name: string;
   unit: string;
@@ -71,6 +48,12 @@ export interface FinalInventoryEntry {
   net_price: number;
   net_value: number;
   created_at: string;
+  updated_at: string;
+}
+
+export interface CommissionMember {
+  name: string;
+  role: string;
 }
 
 export interface OCRResult {

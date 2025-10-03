@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Camera, Search, Trash2, Edit, Barcode } from 'lucide-react';
-import { Category, InventoryEntry, Product } from '../types';
+import { ArrowLeft, Plus, Camera, Search, Trash2, CreditCard as Edit } from 'lucide-react';
+import { Category, InventoryEntry } from '../types';
 import { categoryService } from '../services/categoryService';
 import { entryService } from '../services/entryService';
-import { productService } from '../services/productService';
 import { ocrService } from '../services/ocrService';
 import LoadingSpinner from './ui/LoadingSpinner';
 import Modal from './ui/Modal';
@@ -21,16 +20,13 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   const [showAddModal, setShowAddModal] = useState(false);
   const [showOCRModal, setShowOCRModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<InventoryEntry | null>(null);
-  const [productSuggestions, setProductSuggestions] = useState<Product[]>([]);
   const [newEntry, setNewEntry] = useState({
     pku_w: '',
     product_name: '',
     unit: 'szt',
     quantity: 0,
     net_price: 0,
-    invoice_number: '',
-    barcode: '',
-    notes: ''
+    invoice_number: ''
   });
 
   useEffect(() => {
@@ -58,50 +54,8 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     setEntries(data);
   };
 
-  const handleProductNameChange = async (value: string) => {
+  const handleProductNameChange = (value: string) => {
     setNewEntry({...newEntry, product_name: value});
-    
-    if (value.length >= 2) {
-      const suggestions = await productService.search(value, selectedCategory);
-      setProductSuggestions(suggestions);
-    } else {
-      setProductSuggestions([]);
-    }
-  };
-
-  const selectProductSuggestion = (product: Product) => {
-    setNewEntry({
-      ...newEntry,
-      product_name: product.name,
-      unit: product.unit,
-      net_price: product.net_price || 0,
-      barcode: product.barcode || ''
-    });
-    setProductSuggestions([]);
-  };
-
-  const handleBarcodeInput = async (barcode: string) => {
-    if (!barcode) return;
-    
-    const product = await productService.getByBarcode(barcode);
-    if (product) {
-      setNewEntry({
-        ...newEntry,
-        product_name: product.name,
-        unit: product.unit,
-        net_price: product.net_price || 0,
-        barcode: barcode
-      });
-    }
-  };
-
-  const handleBarcodeOrNameSearch = async (value: string) => {
-    if (value.length >= 2) {
-      const suggestions = await productService.search(value);
-      setProductSuggestions(suggestions);
-    } else {
-      setProductSuggestions([]);
-    }
   };
 
   const handleEditEntry = (entry: InventoryEntry) => {
@@ -112,9 +66,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       unit: entry.unit,
       quantity: entry.quantity,
       net_price: entry.net_price,
-      invoice_number: entry.invoice_number || '',
-      barcode: entry.barcode || '',
-      notes: entry.notes || ''
+      invoice_number: entry.invoice_number || ''
     });
     setShowAddModal(true);
   };
@@ -124,10 +76,8 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
     let entry;
     if (editingEntry) {
-      // Aktualizuj istniejący wpis
       entry = await entryService.updatePreliminaryEntry(editingEntry.id, newEntry);
     } else {
-      // Utwórz nowy wpis
       entry = await entryService.createPreliminaryEntry({
         inventory_id: inventoryId,
         category_id: selectedCategory,
@@ -136,19 +86,6 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     }
 
     if (entry) {
-      // Sprawdź czy produkt istnieje, jeśli nie - utwórz
-      if (newEntry.barcode && newEntry.product_name) {
-        const existingProduct = await productService.getByBarcode(newEntry.barcode);
-        if (!existingProduct) {
-          await productService.create({
-            name: newEntry.product_name,
-            barcode: newEntry.barcode,
-            unit: newEntry.unit,
-            net_price: newEntry.net_price,
-            category_id: selectedCategory
-          });
-        }
-      }
 
       setShowAddModal(false);
       setEditingEntry(null);
@@ -158,9 +95,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
         unit: 'szt',
         quantity: 0,
         net_price: 0,
-        invoice_number: '',
-        barcode: '',
-        notes: ''
+        invoice_number: ''
       });
       await loadEntries();
     }
@@ -284,12 +219,6 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">{entry.product_name}</div>
-                    {entry.barcode && (
-                      <div className="flex items-center space-x-1 text-xs text-gray-500">
-                        <Barcode className="h-3 w-3" />
-                        <span>{entry.barcode}</span>
-                      </div>
-                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {entry.unit}
@@ -378,31 +307,10 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
             <input
               type="text"
               value={newEntry.product_name}
-              onChange={(e) => {
-                setNewEntry({...newEntry, product_name: e.target.value});
-                handleBarcodeOrNameSearch(e.target.value);
-              }}
+              onChange={(e) => handleProductNameChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Wpisz nazwę produktu lub kod kreskowy..."
+              placeholder="Wpisz nazwę produktu..."
             />
-            
-            {productSuggestions.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto">
-                {productSuggestions.map((product) => (
-                  <button
-                    key={product.id}
-                    onClick={() => selectProductSuggestion(product)}
-                    className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm"
-                  >
-                    <div className="font-medium">{product.name}</div>
-                    <div className="text-xs text-gray-500">
-                      {product.barcode && `${product.barcode} • `}
-                      {product.unit} • {product.net_price?.toFixed(2) || '0.00'} zł
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -427,22 +335,6 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Kod kreskowy
-              </label>
-              <input
-                type="text"
-                value={newEntry.barcode}
-                onChange={(e) => {
-                  setNewEntry({...newEntry, barcode: e.target.value});
-                  handleBarcodeInput(e.target.value);
-                  handleBarcodeOrNameSearch(e.target.value);
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Kod kreskowy produktu"
-              />
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -486,17 +378,6 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Uwagi
-            </label>
-            <textarea
-              value={newEntry.notes}
-              onChange={(e) => setNewEntry({...newEntry, notes: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              rows={2}
-            />
-          </div>
 
           <div className="bg-gray-50 p-3 rounded-md">
             <div className="text-sm text-gray-600">

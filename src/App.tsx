@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Layout from './components/ui/Layout';
 import InventoryList from './components/InventoryList';
-import ProductManagement from './components/ProductManagement';
 import PreliminaryInventory from './components/PreliminaryInventory';
 import FinalInventory from './components/FinalInventory';
 import TestPDF from './components/TestPDF';
@@ -22,8 +21,6 @@ function App() {
     switch (currentPage) {
       case 'inventories':
         return <InventoryList onNavigate={handleNavigate} />;
-      case 'products':
-        return <ProductManagement />;
       case 'preliminary':
         return currentInventoryId ? (
           <PreliminaryInventory 

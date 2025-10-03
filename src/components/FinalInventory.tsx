@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Download, RefreshCw, CreditCard as Edit, Trash2, Save, X, Barcode } from 'lucide-react';
-import { FinalInventoryEntry, Inventory } from '../types';
+import { ArrowLeft, Plus, Download, RefreshCw, Edit, Trash2, Save, X, Barcode } from 'lucide-react';
+import { FinalInventoryEntry, Inventory, Category } from '../types';
 import { entryService } from '../services/entryService';
+import { categoryService } from '../services/categoryService';
+import { productService } from '../services/productService';
 import { inventoryService } from '../services/inventoryService';
 import { exportService } from '../services/exportService';
 import LoadingSpinner from './ui/LoadingSpinner';
@@ -14,9 +16,10 @@ interface FinalInventoryProps {
 }
 
 export default function FinalInventory({ inventoryId, onNavigate }: FinalInventoryProps) {
-  const { showConfirm } = useNotification();
+  const { showConfirm, showToast } = useNotification();
   const [entries, setEntries] = useState<FinalInventoryEntry[]>([]);
   const [inventory, setInventory] = useState<Inventory | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingEntry, setEditingEntry] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -28,7 +31,8 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
     net_price: 0,
     barcode: '',
     invoice_number: '',
-    notes: ''
+    notes: '',
+    category_id: ''
   });
 
   useEffect(() => {
@@ -37,12 +41,14 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
 
   const loadData = async () => {
     setLoading(true);
-    const [entriesData, inventoryData] = await Promise.all([
+    const [entriesData, inventoryData, categoriesData] = await Promise.all([
       entryService.getFinalEntries(inventoryId),
-      inventoryService.getById(inventoryId)
+      inventoryService.getById(inventoryId),
+      categoryService.getAll()
     ]);
     setEntries(entriesData);
     setInventory(inventoryData);
+    setCategories(categoriesData);
     setLoading(false);
   };
 
@@ -70,8 +76,10 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
   };
 
   const handleAddEntry = async () => {
+    if (!newEntry.product_name || !newEntry.category_id) return;
+
     const maxSequenceNumber = Math.max(...entries.map(e => e.sequence_number), 0);
-    
+
     const entry = await entryService.createFinalEntry({
       inventory_id: inventoryId,
       sequence_number: maxSequenceNumber + 1,
@@ -79,6 +87,18 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
     });
 
     if (entry) {
+      await productService.createOrUpdate({
+        name: newEntry.product_name,
+        barcode: newEntry.barcode || undefined,
+        unit: newEntry.unit,
+        net_price: newEntry.net_price,
+        category_id: newEntry.category_id,
+        pku_w: newEntry.pku_w || undefined,
+        invoice_number: newEntry.invoice_number || undefined,
+        notes: newEntry.notes || undefined
+      });
+
+      showToast('Produkt dodany do inwentaryzacji i zapisany w bazie produktów', 'success');
       setShowAddModal(false);
       setNewEntry({
         pku_w: '',
@@ -88,7 +108,8 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
         net_price: 0,
         barcode: '',
         invoice_number: '',
-        notes: ''
+        notes: '',
+        category_id: ''
       });
       await loadData();
     }
@@ -265,6 +286,27 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
         size="lg"
       >
         <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Kategoria produktu *
+            </label>
+            <select
+              value={newEntry.category_id}
+              onChange={(e) => setNewEntry({...newEntry, category_id: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Wybierz kategorię...</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              Produkt zostanie dodany do widoku "Produkty" w tej kategorii
+            </p>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               PKU i W (opcjonalne)

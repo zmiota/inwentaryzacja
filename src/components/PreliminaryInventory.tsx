@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Camera, Search, Trash2, CreditCard as Edit, Barcode } from 'lucide-react';
+import { ArrowLeft, Plus, Camera, Search, Trash2, Edit, Barcode } from 'lucide-react';
 import { Category, InventoryEntry, Product } from '../types';
 import { categoryService } from '../services/categoryService';
 import { entryService } from '../services/entryService';
@@ -32,7 +32,8 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     net_price: 0,
     invoice_number: '',
     barcode: '',
-    notes: ''
+    notes: '',
+    category_id: ''
   });
 
   useEffect(() => {
@@ -62,9 +63,9 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
   const handleProductNameChange = async (value: string) => {
     setNewEntry({...newEntry, product_name: value});
-    
+
     if (value.length >= 2) {
-      const suggestions = await productService.search(value, selectedCategory);
+      const suggestions = await productService.search(value);
       setProductSuggestions(suggestions);
     } else {
       setProductSuggestions([]);
@@ -77,14 +78,16 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       product_name: product.name,
       unit: product.unit,
       net_price: product.net_price || 0,
-      barcode: product.barcode || ''
+      barcode: product.barcode || '',
+      pku_w: product.pku_w || '',
+      category_id: product.category_id || newEntry.category_id
     });
     setProductSuggestions([]);
   };
 
   const handleBarcodeInput = async (barcode: string) => {
-    if (!barcode) return;
-    
+    if (!barcode || barcode.length < 3) return;
+
     const product = await productService.getByBarcode(barcode);
     if (product) {
       setNewEntry({
@@ -92,7 +95,9 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
         product_name: product.name,
         unit: product.unit,
         net_price: product.net_price || 0,
-        barcode: barcode
+        barcode: barcode,
+        pku_w: product.pku_w || '',
+        category_id: product.category_id || newEntry.category_id
       });
     }
   };
@@ -116,7 +121,8 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       net_price: entry.net_price,
       invoice_number: entry.invoice_number || '',
       barcode: entry.barcode || '',
-      notes: entry.notes || ''
+      notes: entry.notes || '',
+      category_id: entry.category_id || selectedCategory
     });
     setShowAddModal(true);
   };
@@ -124,12 +130,12 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   const handleSubmitEntry = async () => {
     if (!newEntry.product_name || !selectedCategory) return;
 
+    const categoryToUse = newEntry.category_id || selectedCategory;
+
     let entry;
     if (editingEntry) {
-      // Aktualizuj istniejący wpis
       entry = await entryService.updatePreliminaryEntry(editingEntry.id, newEntry);
     } else {
-      // Utwórz nowy wpis
       entry = await entryService.createPreliminaryEntry({
         inventory_id: inventoryId,
         category_id: selectedCategory,
@@ -138,20 +144,18 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     }
 
     if (entry) {
-      // Sprawdź czy produkt istnieje, jeśli nie - utwórz
-      if (newEntry.barcode && newEntry.product_name) {
-        const existingProduct = await productService.getByBarcode(newEntry.barcode);
-        if (!existingProduct) {
-          await productService.create({
-            name: newEntry.product_name,
-            barcode: newEntry.barcode,
-            unit: newEntry.unit,
-            net_price: newEntry.net_price,
-            category_id: selectedCategory
-          });
-        }
-      }
+      await productService.createOrUpdate({
+        name: newEntry.product_name,
+        barcode: newEntry.barcode || undefined,
+        unit: newEntry.unit,
+        net_price: newEntry.net_price,
+        category_id: categoryToUse,
+        pku_w: newEntry.pku_w || undefined,
+        invoice_number: newEntry.invoice_number || undefined,
+        notes: newEntry.notes || undefined
+      });
 
+      showToast('Produkt dodany do inwentaryzacji i zapisany w bazie produktów', 'success');
       setShowAddModal(false);
       setEditingEntry(null);
       setNewEntry({
@@ -162,7 +166,8 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
         net_price: 0,
         invoice_number: '',
         barcode: '',
-        notes: ''
+        notes: '',
+        category_id: ''
       });
       await loadEntries();
     }
@@ -366,6 +371,26 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
         size="lg"
       >
         <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Kategoria produktu *
+            </label>
+            <select
+              value={newEntry.category_id || selectedCategory}
+              onChange={(e) => setNewEntry({...newEntry, category_id: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              Produkt zostanie dodany do widoku "Produkty" w tej kategorii
+            </p>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               PKU i W (opcjonalne)

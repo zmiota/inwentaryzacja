@@ -87,12 +87,85 @@ export const productService = {
         .from('products')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
       return true;
     } catch (error) {
       console.error('Błąd podczas usuwania produktu:', error);
       return false;
+    }
+  },
+
+  async removeBarcodeFromOtherProducts(barcode: string, currentProductId?: string): Promise<boolean> {
+    try {
+      if (!barcode) return true;
+
+      let query = supabase
+        .from('products')
+        .update({ barcode: null })
+        .eq('barcode', barcode);
+
+      if (currentProductId) {
+        query = query.neq('id', currentProductId);
+      }
+
+      const { error } = await query;
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Błąd podczas usuwania kodu kreskowego z innych produktów:', error);
+      return false;
+    }
+  },
+
+  async createOrUpdate(productData: {
+    name: string;
+    barcode?: string;
+    unit: string;
+    net_price: number;
+    category_id: string;
+    pku_w?: string;
+    invoice_number?: string;
+    notes?: string;
+  }): Promise<Product | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Użytkownik nie jest zalogowany');
+
+      if (productData.barcode) {
+        const existingProduct = await this.getByBarcode(productData.barcode);
+
+        if (existingProduct) {
+          const updated = await this.update(existingProduct.id, {
+            name: productData.name,
+            unit: productData.unit,
+            net_price: productData.net_price,
+            category_id: productData.category_id,
+            pku_w: productData.pku_w,
+            invoice_number: productData.invoice_number,
+            notes: productData.notes
+          });
+          return updated;
+        } else {
+          await this.removeBarcodeFromOtherProducts(productData.barcode);
+        }
+      }
+
+      const { data, error } = await supabase
+        .from('products')
+        .insert([{
+          ...productData,
+          user_id: user.id
+        }])
+        .select('*, category:categories(*)')
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Błąd podczas tworzenia/aktualizacji produktu:', error);
+      return null;
     }
   }
 };

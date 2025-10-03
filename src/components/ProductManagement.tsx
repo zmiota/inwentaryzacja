@@ -16,10 +16,12 @@ export default function ProductManagement() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newProduct, setNewProduct] = useState({
     name: '',
-    barcode: '',
     pku_w: '',
+    barcode: '',
     unit: 'szt',
     net_price: 0,
+    invoice_number: '',
+    notes: '',
     category_id: ''
   });
 
@@ -80,10 +82,12 @@ export default function ProductManagement() {
     setEditingProduct(product);
     setNewProduct({
       name: product.name,
+      pku_w: product.pku_w || '',
       barcode: product.barcode || '',
-      pku_w: '', // PKU nie jest jeszcze w bazie, więc domyślnie puste
       unit: product.unit,
       net_price: product.net_price || 0,
+      invoice_number: product.invoice_number || '',
+      notes: product.notes || '',
       category_id: product.category_id || ''
     });
     setShowAddModal(true);
@@ -92,10 +96,12 @@ export default function ProductManagement() {
   const resetForm = () => {
     setNewProduct({
       name: '',
-      barcode: '',
       pku_w: '',
+      barcode: '',
       unit: 'szt',
       net_price: 0,
+      invoice_number: '',
+      notes: '',
       category_id: categories.length > 0 ? categories[0].id : ''
     });
     setEditingProduct(null);
@@ -214,8 +220,7 @@ export default function ProductManagement() {
                     <div className="text-sm font-medium text-gray-900">{product.name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {/* PKU nie jest jeszcze w bazie danych, więc pokazujemy placeholder */}
-                    <span className="text-gray-400">-</span>
+                    {product.pku_w || <span className="text-gray-400">-</span>}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {product.barcode ? (
@@ -298,33 +303,20 @@ export default function ProductManagement() {
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              PKU i W (opcjonalne)
+            </label>
+            <input
+              type="text"
+              value={newProduct.pku_w}
+              onChange={(e) => setNewProduct({...newProduct, pku_w: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Kod PKU i W"
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                PKU i W (opcjonalne)
-              </label>
-              <input
-                type="text"
-                value={newProduct.pku_w}
-                onChange={(e) => setNewProduct({...newProduct, pku_w: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Kod PKU i W"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Kod kreskowy
-              </label>
-              <input
-                type="text"
-                value={newProduct.barcode}
-                onChange={(e) => setNewProduct({...newProduct, barcode: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Kod kreskowy produktu"
-              />
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Jednostka miary
@@ -344,6 +336,19 @@ export default function ProductManagement() {
                 <option value="m3">m³</option>
                 <option value="opak">opak</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Kod kreskowy
+              </label>
+              <input
+                type="text"
+                value={newProduct.barcode}
+                onChange={(e) => setNewProduct({...newProduct, barcode: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Kod kreskowy produktu"
+              />
             </div>
           </div>
 
@@ -379,6 +384,31 @@ export default function ProductManagement() {
                 placeholder="0.00"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Numer faktury/inwentu
+            </label>
+            <input
+              type="text"
+              value={newProduct.invoice_number}
+              onChange={(e) => setNewProduct({...newProduct, invoice_number: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="np. FV/2025/001"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Uwagi
+            </label>
+            <textarea
+              value={newProduct.notes}
+              onChange={(e) => setNewProduct({...newProduct, notes: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={2}
+            />
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">

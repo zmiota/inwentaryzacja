@@ -8,9 +8,12 @@ export interface Category {
 export interface Product {
   id: string;
   name: string;
+  pku_w?: string;
   barcode?: string;
   unit: string;
   net_price?: number;
+  invoice_number?: string;
+  notes?: string;
   category_id?: string;
   created_at: string;
   updated_at: string;
@@ -64,13 +67,18 @@ export interface FinalInventoryEntry {
   id: string;
   inventory_id: string;
   sequence_number: number;
+  row_number?: number;
   pku_w?: string;
   product_name: string;
   unit: string;
   quantity: number;
   net_price: number;
   net_value: number;
+  barcode?: string;
+  invoice_number?: string;
+  notes?: string;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface OCRResult {

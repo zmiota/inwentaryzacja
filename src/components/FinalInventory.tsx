@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Download, RefreshCw, Edit, Trash2, Save, X } from 'lucide-react';
+import { ArrowLeft, Plus, Download, RefreshCw, Edit, Trash2, Save, X, Barcode } from 'lucide-react';
 import { FinalInventoryEntry, Inventory } from '../types';
 import { entryService } from '../services/entryService';
 import { inventoryService } from '../services/inventoryService';
@@ -23,7 +23,10 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
     product_name: '',
     unit: 'szt',
     quantity: 0,
-    net_price: 0
+    net_price: 0,
+    barcode: '',
+    invoice_number: '',
+    notes: ''
   });
 
   useEffect(() => {
@@ -74,7 +77,10 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
         product_name: '',
         unit: 'szt',
         quantity: 0,
-        net_price: 0
+        net_price: 0,
+        barcode: '',
+        invoice_number: '',
+        notes: ''
       });
       await loadData();
     }
@@ -179,6 +185,9 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Nazwa produktu
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                  Kod kreskowy
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                   J.m.
                 </th>
@@ -211,7 +220,7 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
             </tbody>
             <tfoot className="bg-gray-50">
               <tr>
-                <td colSpan={6} className="px-6 py-3 text-sm font-medium text-gray-900 text-right">
+                <td colSpan={7} className="px-6 py-3 text-sm font-medium text-gray-900 text-right">
                   SUMA WARTOŚCI NETTO:
                 </td>
                 <td className="px-6 py-3 text-sm font-bold text-gray-900">
@@ -242,19 +251,33 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
         size="lg"
       >
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                PKU i W (opcjonalne)
-              </label>
-              <input
-                type="text"
-                value={newEntry.pku_w}
-                onChange={(e) => setNewEntry({...newEntry, pku_w: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              PKU i W (opcjonalne)
+            </label>
+            <input
+              type="text"
+              value={newEntry.pku_w}
+              onChange={(e) => setNewEntry({...newEntry, pku_w: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Kod PKU i W"
+            />
+          </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nazwa produktu *
+            </label>
+            <input
+              type="text"
+              value={newEntry.product_name}
+              onChange={(e) => setNewEntry({...newEntry, product_name: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Wpisz nazwę produktu..."
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Jednostka miary
@@ -275,18 +298,19 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
                 <option value="opak">opak</option>
               </select>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nazwa produktu *
-            </label>
-            <input
-              type="text"
-              value={newEntry.product_name}
-              onChange={(e) => setNewEntry({...newEntry, product_name: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Kod kreskowy
+              </label>
+              <input
+                type="text"
+                value={newEntry.barcode}
+                onChange={(e) => setNewEntry({...newEntry, barcode: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Kod kreskowy produktu"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -315,6 +339,31 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Numer faktury/inwentu
+            </label>
+            <input
+              type="text"
+              value={newEntry.invoice_number}
+              onChange={(e) => setNewEntry({...newEntry, invoice_number: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="np. FV/2025/001"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Uwagi
+            </label>
+            <textarea
+              value={newEntry.notes}
+              onChange={(e) => setNewEntry({...newEntry, notes: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={2}
+            />
           </div>
 
           <div className="bg-gray-50 p-3 rounded-md">
@@ -365,7 +414,10 @@ function FinalInventoryRow({
     product_name: entry.product_name,
     unit: entry.unit,
     quantity: entry.quantity,
-    net_price: entry.net_price
+    net_price: entry.net_price,
+    barcode: entry.barcode || '',
+    invoice_number: entry.invoice_number || '',
+    notes: entry.notes || ''
   });
 
   if (isEditing) {
@@ -458,6 +510,19 @@ function FinalInventoryRow({
       </td>
       <td className="px-6 py-4">
         <div className="text-sm font-medium text-gray-900">{entry.product_name}</div>
+        {entry.notes && (
+          <div className="text-xs text-gray-500 mt-1">{entry.notes}</div>
+        )}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        {entry.barcode ? (
+          <div className="flex items-center space-x-1 text-sm text-gray-900">
+            <Barcode className="h-3 w-3" />
+            <span>{entry.barcode}</span>
+          </div>
+        ) : (
+          <span className="text-gray-400">-</span>
+        )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
         {entry.unit}

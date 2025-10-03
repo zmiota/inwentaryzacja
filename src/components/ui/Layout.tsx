@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Package, FileText, Download, Menu, X, LogOut, Users } from 'lucide-react';
+import { Package, FileText, Menu, X, LogOut, Users } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface LayoutProps {
@@ -25,7 +25,6 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
     { id: 'products', label: 'Produkty', icon: Package },
     { id: 'preliminary', label: 'Inwentaryzacja wstępna', icon: FileText },
     { id: 'final', label: 'Inwentaryzacja końcowa', icon: FileText },
-    { id: 'export', label: 'Eksport', icon: Download },
     { id: 'users', label: 'Użytkownicy', icon: Users, adminOnly: true }
   ];
 

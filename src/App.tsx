@@ -4,7 +4,6 @@ import InventoryList from './components/InventoryList';
 import ProductManagement from './components/ProductManagement';
 import PreliminaryInventory from './components/PreliminaryInventory';
 import FinalInventory from './components/FinalInventory';
-import TestPDF from './components/TestPDF';
 import UserManagement from './components/UserManagement';
 import { Auth } from './components/Auth';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -74,10 +73,6 @@ function AppContent() {
               Powróć do listy inwentaryzacji
             </button>
           </div>
-        );
-      case 'export':
-        return (
-          <TestPDF />
         );
       case 'users':
         return <UserManagement />;

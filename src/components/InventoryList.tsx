@@ -18,8 +18,6 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newInventory, setNewInventory] = useState({
     name: '',
-    unit_name: '',
-    unit_address: '',
     inventory_method: 'ciągły'
   });
 
@@ -48,7 +46,7 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
     
     if (inventory) {
       setShowCreateModal(false);
-      setNewInventory({ name: '', unit_name: '', unit_address: '', inventory_method: 'ciągły' });
+      setNewInventory({ name: '', inventory_method: 'ciągły' });
       await loadInventories();
     }
   };
@@ -226,33 +224,7 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nazwa jednostki inwentaryzacyjnej
-            </label>
-            <input
-              type="text"
-              value={newInventory.unit_name}
-              onChange={(e) => setNewInventory({...newInventory, unit_name: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Nazwa firmy/jednostki"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Adres jednostki
-            </label>
-            <textarea
-              value={newInventory.unit_address}
-              onChange={(e) => setNewInventory({...newInventory, unit_address: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              rows={3}
-              placeholder="Pełny adres jednostki"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sposób przeprowadzenia inwentaryzacji
+              Sposób przeprowadzenia inwentaryzacji *
             </label>
             <select
               value={newInventory.inventory_method}

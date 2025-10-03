@@ -40,7 +40,7 @@ export const exportService = {
       doc.text(commissionText, 14, 25);
 
       const datastart = `Spis rozpoczęto dn ................... o godz ...................`;
-      doc.text(datastart, 14, 40);
+      doc.text(datastart, 14, 30);
 
       // Prawa strona
       const rinwente = `Rodzaj inwentaryzacji - .....................................\nSposób przeprowadzenia - .....................................`;

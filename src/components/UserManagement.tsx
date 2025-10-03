@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { UserPlus, Trash2, Shield, User as UserIcon } from 'lucide-react';
+import { UserPlus, Trash2, Shield, User as UserIcon, Edit2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface User {
@@ -16,10 +16,17 @@ export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newUser, setNewUser] = useState({
     login: '',
     password: '',
     full_name: '',
+    is_admin: false
+  });
+  const [editForm, setEditForm] = useState({
+    full_name: '',
+    password: '',
     is_admin: false
   });
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +74,50 @@ export default function UserManagement() {
 
       setShowCreateModal(false);
       setNewUser({ login: '', password: '', full_name: '', is_admin: false });
+      loadUsers();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleEditUser = (user: User) => {
+    setEditingUser(user);
+    setEditForm({
+      full_name: user.full_name,
+      password: '',
+      is_admin: user.is_admin
+    });
+    setShowEditModal(true);
+    setError(null);
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!editingUser) return;
+
+    try {
+      const updateData: any = {
+        full_name: editForm.full_name,
+        is_admin: editForm.is_admin,
+        updated_at: new Date().toISOString()
+      };
+
+      if (editForm.password) {
+        updateData.password_hash = editForm.password;
+      }
+
+      const { error } = await supabase
+        .from('app_users')
+        .update(updateData)
+        .eq('id', editingUser.id);
+
+      if (error) throw error;
+
+      setShowEditModal(false);
+      setEditingUser(null);
+      setEditForm({ full_name: '', password: '', is_admin: false });
       loadUsers();
     } catch (err: any) {
       setError(err.message);
@@ -178,20 +229,108 @@ export default function UserManagement() {
                   {new Date(user.created_at).toLocaleDateString('pl-PL')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  {user.id !== currentUser?.id && (
+                  <div className="flex items-center justify-end gap-2">
                     <button
-                      onClick={() => handleDeleteUser(user.id)}
-                      className="text-red-600 hover:text-red-900 transition-colors"
+                      onClick={() => handleEditUser(user)}
+                      className="text-blue-600 hover:text-blue-900 transition-colors"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      <Edit2 className="w-5 h-5" />
                     </button>
-                  )}
+                    {user.id !== currentUser?.id && (
+                      <button
+                        onClick={() => handleDeleteUser(user.id)}
+                        className="text-red-600 hover:text-red-900 transition-colors"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {showEditModal && editingUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Edytuj użytkownika</h2>
+
+            <form onSubmit={handleUpdateUser} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Login
+                </label>
+                <input
+                  type="text"
+                  value={editingUser.login}
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nowe hasło (zostaw puste, aby nie zmieniać)
+                </label>
+                <input
+                  type="password"
+                  value={editForm.password}
+                  onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Imię i nazwisko
+                </label>
+                <input
+                  type="text"
+                  value={editForm.full_name}
+                  onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="edit_is_admin"
+                  checked={editForm.is_admin}
+                  onChange={(e) => setEditForm({ ...editForm, is_admin: e.target.checked })}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="edit_is_admin" className="ml-2 block text-sm text-gray-900">
+                  Administrator
+                </label>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingUser(null);
+                    setEditForm({ full_name: '', password: '', is_admin: false });
+                    setError(null);
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Anuluj
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Zapisz
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

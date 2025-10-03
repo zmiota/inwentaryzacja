@@ -13,6 +13,7 @@ export default function ProductManagement() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [barcodeQuery, setBarcodeQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -33,7 +34,7 @@ export default function ProductManagement() {
 
   useEffect(() => {
     loadProducts();
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, barcodeQuery, selectedCategory]);
 
   const loadData = async () => {
     setLoading(true);
@@ -116,11 +117,12 @@ export default function ProductManagement() {
   };
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = !searchQuery || 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.barcode && product.barcode.includes(searchQuery));
+    const matchesSearch = !searchQuery ||
+      product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesBarcode = !barcodeQuery ||
+      (product.barcode && product.barcode.includes(barcodeQuery));
     const matchesCategory = !selectedCategory || product.category_id === selectedCategory;
-    return matchesSearch && matchesCategory;
+    return matchesSearch && matchesBarcode && matchesCategory;
   });
 
   if (loading) {
@@ -149,10 +151,10 @@ export default function ProductManagement() {
 
       {/* Filtry */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Wyszukaj produkty:
+              Nazwa produktu:
             </label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -161,11 +163,27 @@ export default function ProductManagement() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Nazwa produktu lub kod kreskowy..."
+                placeholder="Wpisz nazwę..."
               />
             </div>
           </div>
-          
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Kod kreskowy:
+            </label>
+            <div className="relative">
+              <Barcode className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <input
+                type="text"
+                value={barcodeQuery}
+                onChange={(e) => setBarcodeQuery(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Wpisz kod kreskowy..."
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Kategoria:

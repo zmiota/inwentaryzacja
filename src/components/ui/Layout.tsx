@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
-import { Package, FileText, Download, Menu, X } from 'lucide-react';
+import { Package, FileText, Download, Menu, X, LogOut } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface LayoutProps {
   children: ReactNode;
@@ -9,6 +10,15 @@ interface LayoutProps {
 
 export default function Layout({ children, currentPage, onNavigate }: LayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   const navigation = [
     { id: 'inventories', label: 'Inwentaryzacje', icon: Package },
@@ -27,8 +37,9 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
               <Package className="h-8 w-8 text-blue-600" />
               <h1 className="text-xl font-bold text-gray-900">System Inwentaryzacji</h1>
             </div>
-            
-            <nav className="hidden md:flex space-x-1">
+
+            <div className="flex items-center gap-4">
+              <nav className="hidden md:flex space-x-1">
               {navigation.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -46,14 +57,26 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
                   </button>
                 );
               })}
-            </nav>
+              </nav>
 
-            <button
-              className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+              <div className="hidden md:flex items-center gap-2 border-l pl-4">
+                <span className="text-sm text-gray-600">{user?.email}</span>
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Wyloguj</span>
+                </button>
+              </div>
+
+              <button
+                className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+              >
+                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -80,6 +103,16 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
                   </button>
                 );
               })}
+              <button
+                onClick={() => {
+                  handleSignOut();
+                  setIsMenuOpen(false);
+                }}
+                className="flex items-center space-x-2 w-full px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors border-t mt-2 pt-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Wyloguj ({user?.email})</span>
+              </button>
             </div>
           </div>
         )}

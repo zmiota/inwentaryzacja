@@ -47,12 +47,15 @@ export const productService = {
 
   async create(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product | null> {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Użytkownik nie jest zalogowany');
+
       const { data, error } = await supabase
         .from('products')
-        .insert([product])
+        .insert([{ ...product, user_id: user.id }])
         .select('*, category:categories(*)')
         .single();
-      
+
       if (error) throw error;
       return data;
     } catch (error) {

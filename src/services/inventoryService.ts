@@ -35,12 +35,15 @@ export const inventoryService = {
 
   async create(inventory: Omit<Inventory, 'id' | 'created_at' | 'updated_at'>): Promise<Inventory | null> {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Użytkownik nie jest zalogowany');
+
       const { data, error } = await supabase
         .from('inventories')
-        .insert([inventory])
+        .insert([{ ...inventory, user_id: user.id }])
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     } catch (error) {

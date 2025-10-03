@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Edit, Trash2, FileText, Package } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, FileText, Package } from 'lucide-react';
 import { Inventory } from '../types';
 import { inventoryService } from '../services/inventoryService';
 import LoadingSpinner from './ui/LoadingSpinner';

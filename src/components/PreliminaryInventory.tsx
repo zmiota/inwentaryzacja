@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Camera, Search, Trash2, Edit, Barcode } from 'lucide-react';
+import { ArrowLeft, Plus, Camera, Search, Trash2, CreditCard as Edit, Barcode } from 'lucide-react';
 import { Category, InventoryEntry, Product } from '../types';
 import { categoryService } from '../services/categoryService';
 import { entryService } from '../services/entryService';

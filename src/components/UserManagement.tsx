@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { UserPlus, Trash2, Shield, User as UserIcon, Edit2 } from 'lucide-react';
+import { UserPlus, Trash2, Shield, User as UserIcon, CreditCard as Edit2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 

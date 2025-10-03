@@ -1,7 +1,7 @@
 import { FinalInventoryEntry, Inventory, CommissionMember } from '../types';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { addRobotoFont } from '../utils/robotoFont';
+import { addPolishFont } from '../utils/robotoFont';
 
 export const exportService = {
   async exportToPDF(
@@ -18,47 +18,65 @@ export const exportService = {
         compress: true
       });
 
-      await addRobotoFont(doc);
+      await addPolishFont(doc);
 
-      // --- Nagłówek (pierwsza linia na środku) ---
-      doc.setFontSize(14);
-      doc.setFont('Roboto', 'normal');
+      let currentY = 15;
+      const margin = 14;
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      // Nagłówek
+      doc.setFontSize(16);
+      doc.setFont('Roboto', 'bold');
       const title = `Inwentaryzacja końcowa - ${inventory.name}`;
-      doc.text(
-        title,
-        doc.internal.pageSize.getWidth() / 2,
-        15,
-        { align: 'center' }
-      );
+      doc.text(title, pageWidth / 2, currentY, { align: 'center' });
 
-      // --- Dwa pola tekstowe pod nagłówkiem ---
-      doc.setFontSize(10);
+      currentY += 10;
+
+      // Linia oddzielająca
+      doc.setLineWidth(0.5);
+      doc.line(margin, currentY, pageWidth - margin, currentY);
+
+      currentY += 8;
+
+      // Informacje górne - dwie kolumny
+      doc.setFontSize(9);
       doc.setFont('Roboto', 'normal');
 
-      // Lewa strona
-      const commissionText = `Skład komisji inwentaryzacyjnej \n.....................................\n.....................................\n..................................... : ${commission.map(c => c.name).join(', ')}`;
-      doc.text(commissionText, 14, 25);
+      // Lewa kolumna
+      const leftColumnX = margin;
+      doc.text('Skład komisji inwentaryzacyjnej:', leftColumnX, currentY);
+      currentY += 5;
 
-      const datastart = `Spis rozpoczęto dn ................... o godz ...................`;
-      doc.text(datastart, 14, 30);
+      if (commission.length > 0) {
+        commission.forEach((member) => {
+          doc.text(`- ${member.name}`, leftColumnX + 2, currentY);
+          currentY += 4;
+        });
+      } else {
+        doc.text('- Brak danych', leftColumnX + 2, currentY);
+        currentY += 4;
+      }
 
-      // Prawa strona
-      const rinwente = `Rodzaj inwentaryzacji - .....................................\nSposób przeprowadzenia - .....................................`;
-const lines = doc.splitTextToSize(rinwente, 180);
-doc.text(
-  lines,
-  doc.internal.pageSize.getWidth() - 14,
-  25,
-  { align: 'right' }
-);
-      const datakoniec = `Spis zakończono dn ................... o godz ...................`;
-      const lines2 = doc.splitTextToSize(datakoniec, 180);
-doc.text(
-  lines2,
-  doc.internal.pageSize.getWidth() - 14,
-  30,
-  { align: 'right' }
-  );
+      currentY += 2;
+      const leftDateText = `Spis rozpoczęto dnia: ${inventory.start_date || '...................'} o godz. ${inventory.start_time || '.........'}`;
+      doc.text(leftDateText, leftColumnX, currentY);
+
+      // Prawa kolumna
+      const rightColumnX = pageWidth / 2 + 5;
+      let rightY = 33;
+
+      // Rodzaj inwentaryzacji w jednej linii
+      doc.text('Rodzaj inwentaryzacji - .....................................', rightColumnX, rightY);
+      rightY += 5;
+
+      // Sposób przeprowadzenia w jednej linii
+      doc.text('Sposób przeprowadzenia - .....................................', rightColumnX, rightY);
+      rightY += 7;
+
+      const rightDateText = `Spis zakończono dnia: ${inventory.end_date || '...................'} o godz. ${inventory.end_time || '.........'}`;
+      doc.text(rightDateText, rightColumnX, rightY);
+
+      currentY = Math.max(currentY, rightY) + 8;
 
       // --- Tabela z danymi ---
       const tableData = entries.map((entry, index) => [
@@ -75,10 +93,12 @@ doc.text(
       const totalValue = entries.reduce((sum, entry) => sum + entry.net_value, 0);
       tableData.push(['', '', '', '', '', 'SUMA NETTO:', `${totalValue.toFixed(2)} zł`]);
 
+      const tableStartY = currentY;
+
       autoTable(doc, {
         head: [['Lp', 'PKU i W', 'Nazwa produktu', 'J.m.', 'Ilość', 'Cena netto', 'Wartość netto']],
         body: tableData,
-        startY: 35,
+        startY: tableStartY,
         styles: {
           fontSize: 8,
           cellPadding: 2,
@@ -93,13 +113,13 @@ doc.text(
           font: 'Roboto'
         },
         columnStyles: {
-          0: { halign: 'center', cellWidth: 8 },  // Lp
-          1: { cellWidth: 15 },                   // PKU i W
-          2: { cellWidth: 60 },                   // Nazwa produktu
-          3: { halign: 'center', cellWidth: 10 }, // J.m.
-          4: { halign: 'center', cellWidth: 10 }, // Ilość
-          5: { halign: 'right', cellWidth: 40 },  // Cena netto
-          6: { halign: 'right', cellWidth: 40 },  // Wartość netto
+          0: { halign: 'center', cellWidth: 10 },
+          1: { cellWidth: 20 },
+          2: { cellWidth: 70 },
+          3: { halign: 'center', cellWidth: 15 },
+          4: { halign: 'right', cellWidth: 15 },
+          5: { halign: 'right', cellWidth: 25 },
+          6: { halign: 'right', cellWidth: 27 },
         },
         didParseCell: function (data) {
           if (data.row.index === tableData.length - 1) {
@@ -109,23 +129,59 @@ doc.text(
         },
       });
 
-      // --- Pola pod tabelą ---
-      const finalY = (doc as any).lastAutoTable.finalY || 40; // pozycja końca tabeli
-      const margin = 14;
+      // Sekcja podpisów pod tabelą
+      const finalY = (doc as any).lastAutoTable.finalY || currentY;
+      currentY = finalY + 10;
 
-      doc.setFontSize(10);
+      // Linia oddzielająca
+      doc.setLineWidth(0.5);
+      doc.line(margin, currentY, pageWidth - margin, currentY);
+
+      currentY += 8;
+
+      doc.setFontSize(9);
       doc.setFont('Roboto', 'normal');
 
-      // Pole po lewej
-      doc.text('Podpis osoby materialnie odpowiedzialnej: \n Wycenił (imię nazwisko)..................................(podpis)..................................\nPodpis osoby materialnie odpowiedzialnej: \n Wycenił (imię nazwisko)..................................(podpis)..................................(', margin, finalY + 20);
+      // Lewa sekcja - podpisy osoby odpowiedzialnej
+      doc.setFont('Roboto', 'bold');
+      doc.text('Osoby odpowiedzialne materialnie:', leftColumnX, currentY);
+      doc.setFont('Roboto', 'normal');
+      currentY += 6;
 
-      // Pole po prawej
-      doc.text(
-        'Skład komisji inwentaryzacyjnej \n Przewodniczący.....................................\nCzłonkowie: Izabela Pawłowska (imię i nazwisko)\n Podpis.....................................\nCzłonkowie: Paweł Pawłowski (imię i nazwisko)\n Podpis.....................................',
-        doc.internal.pageSize.getWidth() - margin,
-        finalY + 20,
-        { align: 'right' }
-      );
+      doc.text('Wycenił:', leftColumnX, currentY);
+      currentY += 4;
+      doc.text('Imię i nazwisko: ....................................................', leftColumnX + 2, currentY);
+      currentY += 5;
+      doc.text('Podpis: ....................................................', leftColumnX + 2, currentY);
+
+      // Prawa sekcja - podpisy komisji
+      const signatureY = finalY + 16;
+      doc.setFont('Roboto', 'bold');
+      doc.text('Podpisy komisji inwentaryzacyjnej:', rightColumnX, signatureY);
+      doc.setFont('Roboto', 'normal');
+
+      let signY = signatureY + 6;
+
+      if (commission.length > 0) {
+        commission.forEach((member, index) => {
+          if (index === 0) {
+            doc.text(`Przewodniczący: ${member.name}`, rightColumnX, signY);
+          } else {
+            doc.text(`Członek: ${member.name}`, rightColumnX, signY);
+          }
+          signY += 4;
+          doc.text('Podpis: ....................................', rightColumnX + 2, signY);
+          signY += 6;
+        });
+      } else {
+        doc.text('Przewodniczący: ....................................', rightColumnX, signY);
+        signY += 4;
+        doc.text('Podpis: ....................................', rightColumnX + 2, signY);
+        signY += 6;
+        doc.text('Członek: ....................................', rightColumnX, signY);
+        signY += 4;
+        doc.text('Podpis: ....................................', rightColumnX + 2, signY);
+      }
 
       // --- Zapisz plik ---
       const fileName = `inwentaryzacja_koncowa_${inventory.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;

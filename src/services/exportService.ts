@@ -46,35 +46,30 @@ export const exportService = {
       const leftColumnX = margin;
       doc.text('Skład komisji inwentaryzacyjnej:', leftColumnX, currentY);
       currentY += 5;
+      doc.text('Przewodniczący: .................................................', leftColumnX, currentY);
+      currentY += 4;
+      doc.text('Członek 1: .................................................', leftColumnX, currentY);
+      currentY += 4;
+      doc.text('Członek 2: .................................................', leftColumnX, currentY);
+      currentY += 6;
 
-      if (commission.length > 0) {
-        commission.forEach((member) => {
-          doc.text(`- ${member.name}`, leftColumnX + 2, currentY);
-          currentY += 4;
-        });
-      } else {
-        doc.text('- Brak danych', leftColumnX + 2, currentY);
-        currentY += 4;
-      }
-
-      currentY += 2;
-      const leftDateText = `Spis rozpoczęto dnia: ${inventory.start_date || '...................'} o godz. ${inventory.start_time || '.........'}`;
-      doc.text(leftDateText, leftColumnX, currentY);
+      doc.text('Spis rozpoczęto:', leftColumnX, currentY);
+      currentY += 4;
+      doc.text('Dnia: ................. o godz: .................', leftColumnX, currentY);
 
       // Prawa kolumna
       const rightColumnX = pageWidth / 2 + 5;
       let rightY = 33;
 
-      // Rodzaj inwentaryzacji w jednej linii
-      doc.text('Rodzaj inwentaryzacji - .....................................', rightColumnX, rightY);
-      rightY += 5;
+      doc.text('Rodzaj inwentaryzacji: ciągły', rightColumnX, rightY);
+      rightY += 6;
 
-      // Sposób przeprowadzenia w jednej linii
-      doc.text('Sposób przeprowadzenia - .....................................', rightColumnX, rightY);
-      rightY += 7;
+      doc.text('Sposób przeprowadzenia: Wstępna', rightColumnX, rightY);
+      rightY += 6;
 
-      const rightDateText = `Spis zakończono dnia: ${inventory.end_date || '...................'} o godz. ${inventory.end_time || '.........'}`;
-      doc.text(rightDateText, rightColumnX, rightY);
+      doc.text('Spis zakończono:', rightColumnX, rightY);
+      rightY += 4;
+      doc.text('Dnia: ................. o godz: .................', rightColumnX, rightY);
 
       currentY = Math.max(currentY, rightY) + 8;
 

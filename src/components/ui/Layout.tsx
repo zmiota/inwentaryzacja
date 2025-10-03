@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Package, FileText, Download, Menu, X, LogOut } from 'lucide-react';
+import { Package, FileText, Download, Menu, X, LogOut, Users } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface LayoutProps {
@@ -25,7 +25,8 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
     { id: 'products', label: 'Produkty', icon: Package },
     { id: 'preliminary', label: 'Inwentaryzacja wstępna', icon: FileText },
     { id: 'final', label: 'Inwentaryzacja końcowa', icon: FileText },
-    { id: 'export', label: 'Eksport', icon: Download }
+    { id: 'export', label: 'Eksport', icon: Download },
+    { id: 'users', label: 'Użytkownicy', icon: Users, adminOnly: true }
   ];
 
   return (
@@ -40,7 +41,8 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
 
             <div className="flex items-center gap-4">
               <nav className="hidden md:flex space-x-1">
-              {navigation.map((item) => {
+              {navigation.map((item: any) => {
+                if (item.adminOnly && !user?.is_admin) return null;
                 const Icon = item.icon;
                 return (
                   <button
@@ -60,7 +62,7 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
               </nav>
 
               <div className="hidden md:flex items-center gap-2 border-l pl-4">
-                <span className="text-sm text-gray-600">{user?.email}</span>
+                <span className="text-sm text-gray-600">{user?.login}</span>
                 <button
                   onClick={handleSignOut}
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
@@ -83,7 +85,8 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
         {isMenuOpen && (
           <div className="md:hidden border-t border-gray-200">
             <div className="px-4 py-2 space-y-1">
-              {navigation.map((item) => {
+              {navigation.map((item: any) => {
+                if (item.adminOnly && !user?.is_admin) return null;
                 const Icon = item.icon;
                 return (
                   <button
@@ -111,7 +114,7 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
                 className="flex items-center space-x-2 w-full px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors border-t mt-2 pt-2"
               >
                 <LogOut className="h-4 w-4" />
-                <span>Wyloguj ({user?.email})</span>
+                <span>Wyloguj ({user?.login})</span>
               </button>
             </div>
           </div>

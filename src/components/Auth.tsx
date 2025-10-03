@@ -1,31 +1,21 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { LogIn, UserPlus, Loader2 } from 'lucide-react';
+import { LogIn, Loader2 } from 'lucide-react';
 
 export function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
+  const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const { signIn, signUp } = useAuth();
+  const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccessMessage(null);
     setLoading(true);
 
     try {
-      if (isLogin) {
-        await signIn(email, password);
-      } else {
-        await signUp(email, password);
-        setSuccessMessage('Konto zostało utworzone. Możesz się teraz zalogować.');
-        setIsLogin(true);
-        setPassword('');
-      }
+      await signIn(login, password);
     } catch (err: any) {
       setError(err.message || 'Wystąpił błąd. Spróbuj ponownie.');
     } finally {
@@ -45,7 +35,7 @@ export function Auth() {
               System Inwentaryzacji
             </h1>
             <p className="text-slate-600">
-              {isLogin ? 'Zaloguj się do swojego konta' : 'Utwórz nowe konto'}
+              Zaloguj się do swojego konta
             </p>
           </div>
 
@@ -55,25 +45,19 @@ export function Auth() {
             </div>
           )}
 
-          {successMessage && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-              {successMessage}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
-                Email
+              <label htmlFor="login" className="block text-sm font-medium text-slate-700 mb-2">
+                Login
               </label>
               <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="login"
+                type="text"
+                value={login}
+                onChange={(e) => setLogin(e.target.value)}
                 required
                 className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                placeholder="twoj@email.com"
+                placeholder="Twój login"
               />
             </div>
 
@@ -87,15 +71,9 @@ export function Auth() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
                 className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
-              {!isLogin && (
-                <p className="mt-2 text-sm text-slate-500">
-                  Minimum 6 znaków
-                </p>
-              )}
             </div>
 
             <button
@@ -110,43 +88,12 @@ export function Auth() {
                 </>
               ) : (
                 <>
-                  {isLogin ? (
-                    <>
-                      <LogIn className="w-5 h-5" />
-                      <span>Zaloguj się</span>
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="w-5 h-5" />
-                      <span>Zarejestruj się</span>
-                    </>
-                  )}
+                  <LogIn className="w-5 h-5" />
+                  <span>Zaloguj się</span>
                 </>
               )}
             </button>
           </form>
-
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError(null);
-                setSuccessMessage(null);
-              }}
-              className="text-sm text-slate-600 hover:text-slate-900 transition-colors"
-            >
-              {isLogin ? (
-                <>
-                  Nie masz konta? <span className="font-medium">Zarejestruj się</span>
-                </>
-              ) : (
-                <>
-                  Masz już konto? <span className="font-medium">Zaloguj się</span>
-                </>
-              )}
-            </button>
-          </div>
         </div>
 
         <p className="text-center text-sm text-slate-500 mt-6">

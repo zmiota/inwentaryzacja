@@ -47,12 +47,14 @@ export const productService = {
 
   async create(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product | null> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Użytkownik nie jest zalogowany');
+      const storedUser = localStorage.getItem('app_user');
+      if (!storedUser) throw new Error('Użytkownik nie jest zalogowany');
+
+      const appUser = JSON.parse(storedUser);
 
       const { data, error } = await supabase
         .from('products')
-        .insert([{ ...product, user_id: user.id }])
+        .insert([{ ...product, user_id: appUser.id }])
         .select('*, category:categories(*)')
         .single();
 
@@ -130,8 +132,10 @@ export const productService = {
     notes?: string;
   }): Promise<Product | null> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Użytkownik nie jest zalogowany');
+      const storedUser = localStorage.getItem('app_user');
+      if (!storedUser) throw new Error('Użytkownik nie jest zalogowany');
+
+      const appUser = JSON.parse(storedUser);
 
       if (productData.barcode) {
         const existingProduct = await this.getByBarcode(productData.barcode);
@@ -156,7 +160,7 @@ export const productService = {
         .from('products')
         .insert([{
           ...productData,
-          user_id: user.id
+          user_id: appUser.id
         }])
         .select('*, category:categories(*)')
         .single();

@@ -77,6 +77,7 @@ export interface FinalInventoryEntry {
   barcode?: string;
   invoice_number?: string;
   notes?: string;
+  category_id?: string;
   created_at: string;
   updated_at?: string;
 }

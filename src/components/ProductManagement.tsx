@@ -40,9 +40,6 @@ export default function ProductManagement() {
     setLoading(true);
     const categoriesData = await categoryService.getAll();
     setCategories(categoriesData);
-    if (categoriesData.length > 0 && !selectedCategory) {
-      setSelectedCategory(categoriesData[0].id);
-    }
     await loadProducts();
     setLoading(false);
   };

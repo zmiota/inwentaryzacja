@@ -5,12 +5,14 @@ import { inventoryService } from '../services/inventoryService';
 import LoadingSpinner from './ui/LoadingSpinner';
 import Modal from './ui/Modal';
 import { isSupabaseConfigured } from '../lib/supabase';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface InventoryListProps {
   onNavigate: (page: string, inventoryId?: string) => void;
 }
 
 export default function InventoryList({ onNavigate }: InventoryListProps) {
+  const { showToast, showConfirm } = useNotification();
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -34,7 +36,7 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
 
   const handleCreateInventory = async () => {
     if (!isSupabaseConfigured) {
-      alert('Supabase nie jest skonfigurowany. Dodaj zmienne VITE_SUPABASE_URL i VITE_SUPABASE_ANON_KEY do pliku .env');
+      showToast('Supabase nie jest skonfigurowany. Dodaj zmienne VITE_SUPABASE_URL i VITE_SUPABASE_ANON_KEY do pliku .env', 'error');
       return;
     }
     
@@ -53,16 +55,22 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
 
   const handleDeleteInventory = async (id: string, name: string) => {
     if (!isSupabaseConfigured) {
-      alert('Supabase nie jest skonfigurowany.');
+      showToast('Supabase nie jest skonfigurowany.', 'error');
       return;
     }
 
-    if (confirm(`Czy na pewno chcesz usunąć inwentaryzację "${name}"?\n\nTo działanie usunie również wszystkie powiązane dane (wpisy wstępne, końcowe, członków komisji) i nie może być cofnięte.`)) {
+    const confirmed = await showConfirm({
+      title: 'Usuń inwentaryzację',
+      message: `Czy na pewno chcesz usunąć inwentaryzację "${name}"?\n\nTo działanie usunie również wszystkie powiązane dane (wpisy wstępne, końcowe, członków komisji) i nie może być cofnięte.`,
+      confirmText: 'Usuń',
+      type: 'danger'
+    });
+    if (confirmed) {
       const success = await inventoryService.delete(id);
       if (success) {
         await loadInventories();
       } else {
-        alert('Wystąpił błąd podczas usuwania inwentaryzacji.');
+        showToast('Wystąpił błąd podczas usuwania inwentaryzacji.', 'error');
       }
     }
   };

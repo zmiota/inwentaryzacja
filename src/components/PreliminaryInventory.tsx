@@ -7,6 +7,7 @@ import { productService } from '../services/productService';
 import { ocrService } from '../services/ocrService';
 import LoadingSpinner from './ui/LoadingSpinner';
 import Modal from './ui/Modal';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface PreliminaryInventoryProps {
   inventoryId: string;
@@ -14,6 +15,7 @@ interface PreliminaryInventoryProps {
 }
 
 export default function PreliminaryInventory({ inventoryId, onNavigate }: PreliminaryInventoryProps) {
+  const { showToast, showConfirm } = useNotification();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [entries, setEntries] = useState<InventoryEntry[]>([]);
@@ -167,7 +169,13 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   };
 
   const handleDeleteEntry = async (id: string) => {
-    if (confirm('Czy na pewno chcesz usunąć ten wpis?')) {
+    const confirmed = await showConfirm({
+      title: 'Usuń wpis',
+      message: 'Czy na pewno chcesz usunąć ten wpis?',
+      confirmText: 'Usuń',
+      type: 'danger'
+    });
+    if (confirmed) {
       const success = await entryService.deletePreliminaryEntry(id);
       if (success) {
         await loadEntries();
@@ -557,7 +565,7 @@ function OCRComponent({ onResult }: { onResult: (result: any) => void }) {
     if (result) {
       onResult(result);
     } else {
-      alert('Błąd podczas przetwarzania dokumentu');
+      showToast('Błąd podczas przetwarzania dokumentu', 'error');
     }
   };
 

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { UserPlus, Trash2, Shield, User as UserIcon, CreditCard as Edit2 } from 'lucide-react';
+import { UserPlus, Trash2, Shield, User as UserIcon, Edit2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface User {
   id: string;
@@ -13,6 +14,7 @@ interface User {
 
 export default function UserManagement() {
   const { user: currentUser } = useAuth();
+  const { showConfirm } = useNotification();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -125,7 +127,13 @@ export default function UserManagement() {
   };
 
   const handleDeleteUser = async (id: string) => {
-    if (!confirm('Czy na pewno chcesz usunąć tego użytkownika?')) return;
+    const confirmed = await showConfirm({
+      title: 'Usuń użytkownika',
+      message: 'Czy na pewno chcesz usunąć tego użytkownika?',
+      confirmText: 'Usuń',
+      type: 'danger'
+    });
+    if (!confirmed) return;
 
     try {
       const { error } = await supabase

@@ -7,6 +7,7 @@ import FinalInventory from './components/FinalInventory';
 import UserManagement from './components/UserManagement';
 import { Auth } from './components/Auth';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { isSupabaseConfigured } from './lib/supabase';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
 
@@ -111,7 +112,9 @@ VITE_SUPABASE_ANON_KEY=twój_supabase_anon_key
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <NotificationProvider>
+        <AppContent />
+      </NotificationProvider>
     </AuthProvider>
   );
 }

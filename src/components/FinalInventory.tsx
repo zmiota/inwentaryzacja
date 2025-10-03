@@ -6,6 +6,7 @@ import { inventoryService } from '../services/inventoryService';
 import { exportService } from '../services/exportService';
 import LoadingSpinner from './ui/LoadingSpinner';
 import Modal from './ui/Modal';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface FinalInventoryProps {
   inventoryId: string;
@@ -13,6 +14,7 @@ interface FinalInventoryProps {
 }
 
 export default function FinalInventory({ inventoryId, onNavigate }: FinalInventoryProps) {
+  const { showConfirm } = useNotification();
   const [entries, setEntries] = useState<FinalInventoryEntry[]>([]);
   const [inventory, setInventory] = useState<Inventory | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,7 +47,13 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
   };
 
   const handleGenerateFromPreliminary = async () => {
-    if (confirm('To zaimportuje wszystkie dane z inwentaryzacji wstępnej i zastąpi obecne dane końcowe. Kontynuować?')) {
+    const confirmed = await showConfirm({
+      title: 'Zaciągnij dane z inwentaryzacji wstępnej',
+      message: 'To zaimportuje wszystkie dane z inwentaryzacji wstępnej i zastąpi obecne dane końcowe. Kontynuować?',
+      confirmText: 'Tak, zaimportuj',
+      type: 'warning'
+    });
+    if (confirmed) {
       const success = await entryService.generateFinalFromPreliminary(inventoryId);
       if (success) {
         await loadData();
@@ -87,7 +95,13 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
   };
 
   const handleDeleteEntry = async (id: string) => {
-    if (confirm('Czy na pewno chcesz usunąć ten wpis?')) {
+    const confirmed = await showConfirm({
+      title: 'Usuń wpis',
+      message: 'Czy na pewno chcesz usunąć ten wpis?',
+      confirmText: 'Usuń',
+      type: 'danger'
+    });
+    if (confirmed) {
       const success = await entryService.deleteFinalEntry(id);
       if (success) {
         await loadData();

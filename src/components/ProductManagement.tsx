@@ -5,8 +5,10 @@ import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
 import LoadingSpinner from './ui/LoadingSpinner';
 import Modal from './ui/Modal';
+import { useNotification } from '../contexts/NotificationContext';
 
 export default function ProductManagement() {
+  const { showConfirm } = useNotification();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +72,13 @@ export default function ProductManagement() {
   };
 
   const handleDeleteProduct = async (id: string, name: string) => {
-    if (confirm(`Czy na pewno chcesz usunąć produkt "${name}"?`)) {
+    const confirmed = await showConfirm({
+      title: 'Usuń produkt',
+      message: `Czy na pewno chcesz usunąć produkt "${name}"?`,
+      confirmText: 'Usuń',
+      type: 'danger'
+    });
+    if (confirmed) {
       const success = await productService.delete(id);
       if (success) {
         await loadProducts();

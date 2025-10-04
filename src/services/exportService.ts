@@ -27,7 +27,7 @@ export const exportService = {
       // Nagłówek
       doc.setFontSize(16);
       doc.setFont('Roboto', 'bold');
-      const title = `Arkusz spisu z natury
+            const title = `Arkusz spisu z natury
 uniwersalny`;
       doc.text(title, pageWidth / 2, currentY, { align: 'center' });
 
@@ -61,8 +61,9 @@ uniwersalny`;
       // Prawa kolumna
       const rightColumnX = pageWidth / 2 + 5;
       let rightY = 33;
-
-      doc.text('Rodzaj inwentaryzacji: ciągły', rightColumnX, rightY);
+      const title2 = 'Rodzaj inwentaryzacji: końcowa - ${inventory.name}';
+      doc.text(title2, pageWidth / 2, currentY, { rightColumnX, rightY });
+      // doc.text('Rodzaj inwentaryzacji: końcowa - ${inventory.name}', rightColumnX, rightY);
       rightY += 6;
 
       doc.text('Sposób przeprowadzenia: Wstępna', rightColumnX, rightY);

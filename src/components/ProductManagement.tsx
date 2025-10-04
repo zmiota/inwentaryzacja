@@ -29,11 +29,15 @@ export default function ProductManagement() {
     category_id: ''
   });
 
+  const [isInitialized, setIsInitialized] = React.useState(false);
+
   useEffect(() => {
     loadData();
   }, []);
 
   useEffect(() => {
+    if (!isInitialized) return;
+
     const resetAndLoad = async () => {
       setProducts([]);
       setHasMore(true);
@@ -57,6 +61,7 @@ export default function ProductManagement() {
     setCategories(categoriesData);
     await loadProducts();
     setLoading(false);
+    setIsInitialized(true);
   };
 
   const loadProducts = async (reset: boolean = false) => {

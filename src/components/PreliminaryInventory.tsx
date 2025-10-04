@@ -151,34 +151,37 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       });
     }
 
-    if (entry) {
-      await productService.createOrUpdate({
-        name: newEntry.product_name,
-        barcode: newEntry.barcode || undefined,
-        unit: newEntry.unit,
-        net_price: newEntry.net_price,
-        category_id: categoryToUse,
-        pku_w: newEntry.pku_w || undefined,
-        invoice_number: newEntry.invoice_number || undefined,
-        notes: newEntry.notes || undefined
-      });
-
-      showToast('Produkt dodany do inwentaryzacji i zapisany w bazie produktów', 'success');
-      setShowAddModal(false);
-      setEditingEntry(null);
-      setNewEntry({
-        pku_w: '',
-        product_name: '',
-        unit: 'szt',
-        quantity: 0,
-        net_price: 0,
-        invoice_number: '',
-        barcode: '',
-        notes: '',
-        category_id: ''
-      });
-      await loadEntries();
+    if (!entry) {
+      showToast('Nie udało się zapisać wpisu', 'error');
+      return;
     }
+
+    await productService.createOrUpdate({
+      name: newEntry.product_name,
+      barcode: newEntry.barcode || undefined,
+      unit: newEntry.unit,
+      net_price: newEntry.net_price,
+      category_id: categoryToUse,
+      pku_w: newEntry.pku_w || undefined,
+      invoice_number: newEntry.invoice_number || undefined,
+      notes: newEntry.notes || undefined
+    });
+
+    showToast('Produkt dodany do inwentaryzacji i zapisany w bazie produktów', 'success');
+    setShowAddModal(false);
+    setEditingEntry(null);
+    setNewEntry({
+      pku_w: '',
+      product_name: '',
+      unit: 'szt',
+      quantity: 0,
+      net_price: 0,
+      invoice_number: '',
+      barcode: '',
+      notes: '',
+      category_id: ''
+    });
+    await loadEntries();
   };
 
   const handleDeleteEntry = async (id: string) => {

@@ -66,8 +66,8 @@ uniwersalny`;
      // doc.text('Rodzaj inwentaryzacji: końcowa - ${inventory.name}', rightColumnX, rightY);
       rightY += 6;
 
-      doc.text('Sposób przeprowadzenia: Wstępna', rightColumnX, rightY);
-      rightY += 6;
+     // doc.text('Sposób przeprowadzenia: Wstępna', rightColumnX, rightY);
+     // rightY += 6;
 
       doc.text('Spis zakończono:', rightColumnX, rightY);
       rightY += 4;

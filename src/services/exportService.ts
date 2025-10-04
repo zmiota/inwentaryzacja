@@ -27,7 +27,9 @@ export const exportService = {
       // Nagłówek
       doc.setFontSize(16);
       doc.setFont('Roboto', 'bold');
-      const title = `Inwentaryzacja końcowa - ${inventory.name}`;
+      const title = `Arkusz spisu z natury`;
+      currentY += 5;
+      doc.text('uniwersalny';
       doc.text(title, pageWidth / 2, currentY, { align: 'center' });
 
       currentY += 10;

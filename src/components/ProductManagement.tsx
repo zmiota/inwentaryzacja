@@ -36,6 +36,15 @@ export default function ProductManagement() {
     loadProducts();
   }, [searchQuery, barcodeQuery, selectedCategory]);
 
+  useEffect(() => {
+    if (categories.length > 0 && !newProduct.category_id && !editingProduct) {
+      setNewProduct(prev => ({
+        ...prev,
+        category_id: categories[0].id
+      }));
+    }
+  }, [categories]);
+
   const loadData = async () => {
     setLoading(true);
     const categoriesData = await categoryService.getAll();
@@ -50,6 +59,10 @@ export default function ProductManagement() {
   };
 
   const handleCreateProduct = async () => {
+    if (!newProduct.category_id) {
+      alert('Proszę wybrać kategorię');
+      return;
+    }
     const product = await productService.create(newProduct);
     if (product) {
       setShowAddModal(false);
@@ -60,7 +73,11 @@ export default function ProductManagement() {
 
   const handleUpdateProduct = async () => {
     if (!editingProduct) return;
-    
+    if (!newProduct.category_id) {
+      alert('Proszę wybrać kategorię');
+      return;
+    }
+
     const updated = await productService.update(editingProduct.id, newProduct);
     if (updated) {
       setEditingProduct(null);
@@ -378,12 +395,13 @@ export default function ProductManagement() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Kategoria
+                Kategoria *
               </label>
               <select
                 value={newProduct.category_id}
                 onChange={(e) => setNewProduct({...newProduct, category_id: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
               >
                 <option value="">Wybierz kategorię</option>
                 {categories.map((category) => (
@@ -446,7 +464,7 @@ export default function ProductManagement() {
             </button>
             <button
               onClick={editingProduct ? handleUpdateProduct : handleCreateProduct}
-              disabled={!newProduct.name}
+              disabled={!newProduct.name || !newProduct.category_id}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {editingProduct ? 'Zapisz zmiany' : 'Dodaj produkt'}

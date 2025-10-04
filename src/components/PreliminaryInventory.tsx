@@ -61,6 +61,22 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     setEntries(data);
   };
 
+  const resetEntryForm = () => {
+    setNewEntry({
+      pku_w: '',
+      product_name: '',
+      unit: 'szt',
+      quantity: 0,
+      net_price: 0,
+      invoice_number: '',
+      barcode: '',
+      notes: '',
+      category_id: selectedCategory
+    });
+    setEditingEntry(null);
+    setProductSuggestions([]);
+  };
+
   const handleProductNameChange = async (value: string) => {
     setNewEntry({...newEntry, product_name: value});
 
@@ -169,18 +185,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
     showToast('Produkt dodany do inwentaryzacji i zapisany w bazie produktów', 'success');
     setShowAddModal(false);
-    setEditingEntry(null);
-    setNewEntry({
-      pku_w: '',
-      product_name: '',
-      unit: 'szt',
-      quantity: 0,
-      net_price: 0,
-      invoice_number: '',
-      barcode: '',
-      notes: '',
-      category_id: ''
-    });
+    resetEntryForm();
     await loadEntries();
   };
 
@@ -235,7 +240,10 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
             <span>OCR</span>
           </button>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => {
+              resetEntryForm();
+              setShowAddModal(true);
+            }}
             className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
           >
             <Plus className="h-4 w-4" />
@@ -377,7 +385,10 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       {/* Modal dodawania produktu */}
       <Modal
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => {
+          setShowAddModal(false);
+          resetEntryForm();
+        }}
         title={editingEntry ? "Edytuj wpis w inwentaryzacji" : "Dodaj produkt do inwentaryzacji"}
         size="lg"
       >
@@ -550,14 +561,17 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
           <div className="flex justify-end space-x-3 pt-4">
             <button
-              onClick={() => setShowAddModal(false)}
+              onClick={() => {
+                setShowAddModal(false);
+                resetEntryForm();
+              }}
               className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
             >
               Anuluj
             </button>
             <button
               onClick={handleSubmitEntry}
-              disabled={!newEntry.product_name}
+              disabled={!newEntry.product_name || (!newEntry.category_id && !selectedCategory)}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {editingEntry ? "Zapisz zmiany" : "Dodaj do inwentaryzacji"}

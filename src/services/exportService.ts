@@ -28,7 +28,7 @@ export const exportService = {
       doc.setFontSize(16);
       doc.setFont('Roboto', 'bold');
       const title = `Arkusz spisu z natury
-      uniwersalny`;
+uniwersalny`;
       doc.text(title, pageWidth / 2, currentY, { align: 'center' });
 
       currentY += 10;

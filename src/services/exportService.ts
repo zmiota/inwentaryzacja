@@ -61,7 +61,7 @@ uniwersalny`;
       // Prawa kolumna
       const rightColumnX = pageWidth / 2 + 5;
       let rightY = 33;
-      const title2 = `Rodzaj inwentaryzacji: końcowa - ${inventory.name}`;
+      const title2 = `    SRodzaj inwentaryzacji: końcowa - ${inventory.name}`;
       doc.text(title2, pageWidth / 2, currentY);
      // doc.text('Rodzaj inwentaryzacji: końcowa - ${inventory.name}', rightColumnX, rightY);
       rightY += 6;

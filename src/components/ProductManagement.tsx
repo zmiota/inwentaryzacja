@@ -30,20 +30,20 @@ export default function ProductManagement() {
   });
 
   const [isInitialized, setIsInitialized] = React.useState(false);
+  const loadingRef = React.useRef(false);
 
   useEffect(() => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     loadData();
   }, []);
 
   useEffect(() => {
     if (!isInitialized) return;
-
-    const resetAndLoad = async () => {
-      setProducts([]);
-      setHasMore(true);
-      await loadProducts(true);
-    };
-    resetAndLoad();
+    const timeoutId = setTimeout(() => {
+      loadProducts(true);
+    }, 0);
+    return () => clearTimeout(timeoutId);
   }, [searchQuery, selectedCategory]);
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export default function ProductManagement() {
     setLoading(true);
     const categoriesData = await categoryService.getAll();
     setCategories(categoriesData);
-    await loadProducts();
+    await loadProducts(true);
     setLoading(false);
     setIsInitialized(true);
   };

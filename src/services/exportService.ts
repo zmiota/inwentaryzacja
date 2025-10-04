@@ -64,13 +64,13 @@ uniwersalny`;
       const title2 = `      Rodzaj inwentaryzacji: końcowa - ${inventory.name}`;
       doc.text(title2, pageWidth / 2, currentY);
      // doc.text('Rodzaj inwentaryzacji: końcowa - ${inventory.name}', rightColumnX, rightY);
-      rightY += 6;
+      rightY += 4;
 
      // doc.text('Sposób przeprowadzenia: Wstępna', rightColumnX, rightY);
      // rightY += 6;
 
       doc.text('Spis zakończono:', rightColumnX, rightY);
-      rightY += 4;
+      rightY += 6;
       doc.text('Dnia: ................. o godz: .................', rightColumnX, rightY);
 
       currentY = Math.max(currentY, rightY) + 8;

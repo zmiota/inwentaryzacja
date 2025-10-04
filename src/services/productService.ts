@@ -62,11 +62,16 @@ export const productService = {
         .select('*, category:categories(*)')
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505' && error.message.includes('products_barcode_unique_idx')) {
+          throw new Error('DUPLICATE_BARCODE');
+        }
+        throw error;
+      }
       return data;
     } catch (error) {
       console.error('Błąd podczas tworzenia produktu:', error);
-      return null;
+      throw error;
     }
   },
 
@@ -78,12 +83,17 @@ export const productService = {
         .eq('id', id)
         .select('*, category:categories(*)')
         .single();
-      
-      if (error) throw error;
+
+      if (error) {
+        if (error.code === '23505' && error.message.includes('products_barcode_unique_idx')) {
+          throw new Error('DUPLICATE_BARCODE');
+        }
+        throw error;
+      }
       return data;
     } catch (error) {
       console.error('Błąd podczas aktualizacji produktu:', error);
-      return null;
+      throw error;
     }
   },
 

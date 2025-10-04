@@ -8,7 +8,7 @@ import Modal from './ui/Modal';
 import { useNotification } from '../contexts/NotificationContext';
 
 export default function ProductManagement() {
-  const { showConfirm } = useNotification();
+  const { showConfirm, showToast } = useNotification();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,33 +84,52 @@ export default function ProductManagement() {
 
   const handleCreateProduct = async () => {
     if (!newProduct.category_id) {
-      alert('Proszę wybrać kategorię');
+      showToast('Proszę wybrać kategorię', 'error');
       return;
     }
-    const product = await productService.create(newProduct);
-    if (product) {
-      setShowAddModal(false);
-      resetForm();
-      setProducts([]);
-      setHasMore(true);
-      await loadProducts(true);
+    try {
+      const product = await productService.create(newProduct);
+      if (product) {
+        showToast('Produkt został dodany', 'success');
+        setShowAddModal(false);
+        resetForm();
+        setProducts([]);
+        setHasMore(true);
+        await loadProducts(true);
+      }
+    } catch (error: any) {
+      if (error.message === 'DUPLICATE_BARCODE') {
+        showToast('Produkt z takim kodem kreskowym już istnieje w systemie', 'error');
+      } else {
+        showToast('Błąd podczas dodawania produktu', 'error');
+      }
     }
   };
 
   const handleUpdateProduct = async () => {
     if (!editingProduct) return;
     if (!newProduct.category_id) {
-      alert('Proszę wybrać kategorię');
+      showToast('Proszę wybrać kategorię', 'error');
       return;
     }
 
-    const updated = await productService.update(editingProduct.id, newProduct);
-    if (updated) {
-      setEditingProduct(null);
-      resetForm();
-      setProducts([]);
-      setHasMore(true);
-      await loadProducts(true);
+    try {
+      const updated = await productService.update(editingProduct.id, newProduct);
+      if (updated) {
+        showToast('Produkt został zaktualizowany', 'success');
+        setEditingProduct(null);
+        resetForm();
+        setShowAddModal(false);
+        setProducts([]);
+        setHasMore(true);
+        await loadProducts(true);
+      }
+    } catch (error: any) {
+      if (error.message === 'DUPLICATE_BARCODE') {
+        showToast('Produkt z takim kodem kreskowym już istnieje w systemie', 'error');
+      } else {
+        showToast('Błąd podczas aktualizacji produktu', 'error');
+      }
     }
   };
 

@@ -32,7 +32,7 @@ export const exportService = {
           doc.setPage(i);
           doc.setFontSize(10);
           doc.setFont('Roboto', 'normal');
-          doc.text(`${i}`, pageWidth - margin - 5, 10, { align: 'right' });
+          doc.text(`str ${i}`, pageWidth - margin - 5, 10, { align: 'right' });
         }
       };
 

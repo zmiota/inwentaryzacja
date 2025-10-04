@@ -31,6 +31,7 @@ export default function ProductManagement() {
 
   const [isInitialized, setIsInitialized] = React.useState(false);
   const loadingRef = React.useRef(false);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     if (loadingRef.current) return;
@@ -42,6 +43,7 @@ export default function ProductManagement() {
     if (!isInitialized) return;
     const timeoutId = setTimeout(() => {
       loadProducts(true);
+      updateCount();
     }, 0);
     return () => clearTimeout(timeoutId);
   }, [searchQuery, selectedCategory]);
@@ -60,8 +62,14 @@ export default function ProductManagement() {
     const categoriesData = await categoryService.getAll();
     setCategories(categoriesData);
     await loadProducts(true);
+    await updateCount();
     setLoading(false);
     setIsInitialized(true);
+  };
+
+  const updateCount = async () => {
+    const count = await productService.getCount(searchQuery || undefined, selectedCategory || undefined);
+    setTotalCount(count);
   };
 
   const loadProducts = async (reset: boolean = false) => {
@@ -104,6 +112,7 @@ export default function ProductManagement() {
         setProducts([]);
         setHasMore(true);
         await loadProducts(true);
+        await updateCount();
       }
     } catch (error: any) {
       if (error.message === 'DUPLICATE_BARCODE') {
@@ -131,6 +140,7 @@ export default function ProductManagement() {
         setProducts([]);
         setHasMore(true);
         await loadProducts(true);
+        await updateCount();
       }
     } catch (error: any) {
       if (error.message === 'DUPLICATE_BARCODE') {
@@ -151,9 +161,11 @@ export default function ProductManagement() {
     if (confirmed) {
       const success = await productService.delete(id);
       if (success) {
+        showToast('Produkt został usunięty', 'success');
         setProducts([]);
         setHasMore(true);
         await loadProducts(true);
+        await updateCount();
       }
     }
   };
@@ -200,7 +212,15 @@ export default function ProductManagement() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Zarządzanie produktami</h1>
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-bold text-gray-900">Zarządzanie produktami</h1>
+          <div className="flex items-center space-x-2 bg-gray-100 px-4 py-2 rounded-md">
+            <Package className="h-5 w-5 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">
+              Produktów w bazie: <span className="font-bold text-gray-900">{totalCount}</span>
+            </span>
+          </div>
+        </div>
         <button
           onClick={() => {
             resetForm();

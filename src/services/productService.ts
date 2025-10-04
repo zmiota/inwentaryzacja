@@ -185,5 +185,29 @@ export const productService = {
       console.error('Błąd podczas tworzenia/aktualizacji produktu:', error);
       return null;
     }
+  },
+
+  async getCount(query?: string, categoryId?: string): Promise<number> {
+    try {
+      let queryBuilder = supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true });
+
+      if (query) {
+        queryBuilder = queryBuilder.or(`name.ilike.%${query}%,barcode.ilike.%${query}%`);
+      }
+
+      if (categoryId) {
+        queryBuilder = queryBuilder.eq('category_id', categoryId);
+      }
+
+      const { count, error } = await queryBuilder;
+
+      if (error) throw error;
+      return count || 0;
+    } catch (error) {
+      console.error('Błąd podczas pobierania liczby produktów:', error);
+      return 0;
+    }
   }
 };

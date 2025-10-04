@@ -132,13 +132,21 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
     const categoryToUse = newEntry.category_id || selectedCategory;
 
+    if (!categoryToUse) {
+      showToast('Kategoria jest wymagana', 'error');
+      return;
+    }
+
     let entry;
     if (editingEntry) {
-      entry = await entryService.updatePreliminaryEntry(editingEntry.id, newEntry);
+      entry = await entryService.updatePreliminaryEntry(editingEntry.id, {
+        ...newEntry,
+        category_id: categoryToUse
+      });
     } else {
       entry = await entryService.createPreliminaryEntry({
         inventory_id: inventoryId,
-        category_id: selectedCategory,
+        category_id: categoryToUse,
         ...newEntry
       });
     }

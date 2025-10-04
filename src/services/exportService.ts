@@ -91,7 +91,7 @@ uniwersalny`;
       rightY += 8;
 
       doc.setFont('Roboto', 'bold');
-      doc.text(`Rodzaj inwentaryzacji: końcowa - ${inventory.name}`, rightColumnX, rightY);
+      doc.text(`Rodzaj inwentaryzacji: końcowa za ${inventory.name}`, rightColumnX, rightY);
       doc.setFont('Roboto', 'normal');
 
       currentY = Math.max(currentY, rightY) + 8;

@@ -2,25 +2,29 @@ import { supabase } from '../lib/supabase';
 import { Product } from '../types';
 
 export const productService = {
-  async search(query: string, categoryId?: string): Promise<Product[]> {
+  async search(
+    query: string,
+    categoryId?: string,
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<Product[]> {
     try {
       let queryBuilder = supabase
         .from('products')
-        .select('*, category:categories(*)');
+        .select('*, category:categories(*)')
+        .order('name', { ascending: true })
+        .range(offset, offset + limit - 1);
 
       if (query) {
         queryBuilder = queryBuilder.or(`name.ilike.%${query}%,barcode.ilike.%${query}%`);
       }
-
-      queryBuilder = queryBuilder
-        .limit(10);
 
       if (categoryId) {
         queryBuilder = queryBuilder.eq('category_id', categoryId);
       }
 
       const { data, error } = await queryBuilder;
-      
+
       if (error) throw error;
       return data || [];
     } catch (error) {

@@ -12,6 +12,8 @@ export default function ProductManagement() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [barcodeQuery, setBarcodeQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -33,7 +35,9 @@ export default function ProductManagement() {
   }, []);
 
   useEffect(() => {
-    loadProducts();
+    setProducts([]);
+    setHasMore(true);
+    loadProducts(true);
   }, [searchQuery, barcodeQuery, selectedCategory]);
 
   useEffect(() => {
@@ -53,9 +57,29 @@ export default function ProductManagement() {
     setLoading(false);
   };
 
-  const loadProducts = async () => {
-    const data = await productService.search(searchQuery || '', selectedCategory);
-    setProducts(data);
+  const loadProducts = async (reset: boolean = false) => {
+    if (!hasMore && !reset) return;
+
+    if (reset) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
+    const offset = reset ? 0 : products.length;
+    const data = await productService.search(searchQuery || '', selectedCategory, 50, offset);
+
+    if (data.length < 50) {
+      setHasMore(false);
+    }
+
+    if (reset) {
+      setProducts(data);
+      setLoading(false);
+    } else {
+      setProducts(prev => [...prev, ...data]);
+      setLoadingMore(false);
+    }
   };
 
   const handleCreateProduct = async () => {
@@ -67,7 +91,9 @@ export default function ProductManagement() {
     if (product) {
       setShowAddModal(false);
       resetForm();
-      await loadProducts();
+      setProducts([]);
+      setHasMore(true);
+      await loadProducts(true);
     }
   };
 
@@ -82,7 +108,9 @@ export default function ProductManagement() {
     if (updated) {
       setEditingProduct(null);
       resetForm();
-      await loadProducts();
+      setProducts([]);
+      setHasMore(true);
+      await loadProducts(true);
     }
   };
 
@@ -96,7 +124,9 @@ export default function ProductManagement() {
     if (confirmed) {
       const success = await productService.delete(id);
       if (success) {
-        await loadProducts();
+        setProducts([]);
+        setHasMore(true);
+        await loadProducts(true);
       }
     }
   };
@@ -225,8 +255,18 @@ export default function ProductManagement() {
             Produkty ({filteredProducts.length})
           </h3>
         </div>
-        
-        <div className="overflow-x-auto">
+
+        <div
+          className="overflow-x-auto max-h-[600px] overflow-y-auto"
+          onScroll={(e) => {
+            const target = e.currentTarget;
+            if (target.scrollHeight - target.scrollTop <= target.clientHeight + 100) {
+              if (!loadingMore && hasMore) {
+                loadProducts(false);
+              }
+            }
+          }}
+        >
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -303,9 +343,15 @@ export default function ProductManagement() {
               ))}
             </tbody>
           </table>
+
+          {loadingMore && (
+            <div className="flex justify-center items-center py-4">
+              <LoadingSpinner size="sm" text="Ładowanie kolejnych produktów..." />
+            </div>
+          )}
         </div>
 
-        {filteredProducts.length === 0 && (
+        {filteredProducts.length === 0 && !loading && (
           <div className="text-center py-12">
             <Package className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">Brak produktów</h3>

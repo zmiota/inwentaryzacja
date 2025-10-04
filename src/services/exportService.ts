@@ -23,11 +23,23 @@ export const exportService = {
       let currentY = 15;
       const margin = 14;
       const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // Funkcja do dodawania numeracji strony w prawym górnym rogu
+      const addPageNumber = () => {
+        const pageCount = doc.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(10);
+          doc.setFont('Roboto', 'normal');
+          doc.text(`${i}`, pageWidth - margin - 5, 10, { align: 'right' });
+        }
+      };
 
       // Nagłówek
       doc.setFontSize(16);
       doc.setFont('Roboto', 'bold');
-            const title = `Arkusz spisu z natury
+      const title = `Arkusz spisu z natury
 uniwersalny`;
       doc.text(title, pageWidth / 2, currentY, { align: 'center' });
 
@@ -58,20 +70,29 @@ uniwersalny`;
       currentY += 4;
       doc.text('Dnia: ................. o godz: .................', leftColumnX, currentY);
 
-      // Prawa kolumna
+      // Prawa kolumna - dane sklepu
       const rightColumnX = pageWidth / 2 + 5;
       let rightY = 33;
-      const title2 = `      Rodzaj inwentaryzacji: końcowa - ${inventory.name}`;
-      doc.text(title2, pageWidth / 2, currentY);
-     // doc.text('Rodzaj inwentaryzacji: końcowa - ${inventory.name}', rightColumnX, rightY);
-      rightY += 4;
 
-     // doc.text('Sposób przeprowadzenia: Wstępna', rightColumnX, rightY);
-     // rightY += 6;
+      doc.setFont('Roboto', 'bold');
+      doc.text('Sklep wielobranżowy FARMER - PALEŚ', rightColumnX, rightY);
+      rightY += 4;
+      doc.setFont('Roboto', 'normal');
+      doc.text('Paweł Pawłowski ul. Kilińskiego 11', rightColumnX, rightY);
+      rightY += 4;
+      doc.text('62-410 Zagórów', rightColumnX, rightY);
+      rightY += 4;
+      doc.text('NIP 6671252482', rightColumnX, rightY);
+      rightY += 8;
 
       doc.text('Spis zakończono:', rightColumnX, rightY);
-      rightY += 6;
+      rightY += 4;
       doc.text('Dnia: ................. o godz: .................', rightColumnX, rightY);
+      rightY += 8;
+
+      doc.setFont('Roboto', 'bold');
+      doc.text(`Rodzaj inwentaryzacji: końcowa - ${inventory.name}`, rightColumnX, rightY);
+      doc.setFont('Roboto', 'normal');
 
       currentY = Math.max(currentY, rightY) + 8;
 
@@ -179,6 +200,9 @@ uniwersalny`;
         signY += 4;
         doc.text('Podpis: ....................................', rightColumnX + 2, signY);
       }
+
+      // Dodaj numerację stron
+      addPageNumber();
 
       // --- Zapisz plik ---
       const fileName = `inwentaryzacja_koncowa_${inventory.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;

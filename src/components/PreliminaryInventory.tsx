@@ -24,6 +24,9 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   const [showOCRModal, setShowOCRModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<InventoryEntry | null>(null);
   const [productSuggestions, setProductSuggestions] = useState<Product[]>([]);
+  const [suggestionOffset, setSuggestionOffset] = useState(0);
+  const [hasMoreSuggestions, setHasMoreSuggestions] = useState(true);
+  const [loadingMoreSuggestions, setLoadingMoreSuggestions] = useState(false);
   const [newEntry, setNewEntry] = useState({
     pku_w: '',
     product_name: '',
@@ -75,16 +78,23 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     });
     setEditingEntry(null);
     setProductSuggestions([]);
+    setSuggestionOffset(0);
+    setHasMoreSuggestions(true);
   };
 
   const handleProductNameChange = async (value: string) => {
     setNewEntry({...newEntry, product_name: value});
 
     if (value.length >= 2) {
-      const suggestions = await productService.search(value);
+      setSuggestionOffset(0);
+      setHasMoreSuggestions(true);
+      const suggestions = await productService.search(value, undefined, 50, 0);
       setProductSuggestions(suggestions);
+      setHasMoreSuggestions(suggestions.length === 50);
     } else {
       setProductSuggestions([]);
+      setSuggestionOffset(0);
+      setHasMoreSuggestions(true);
     }
   };
 
@@ -120,10 +130,37 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
   const handleBarcodeOrNameSearch = async (value: string) => {
     if (value.length >= 2) {
-      const suggestions = await productService.search(value);
+      setSuggestionOffset(0);
+      setHasMoreSuggestions(true);
+      const suggestions = await productService.search(value, undefined, 50, 0);
       setProductSuggestions(suggestions);
+      setHasMoreSuggestions(suggestions.length === 50);
     } else {
       setProductSuggestions([]);
+      setSuggestionOffset(0);
+      setHasMoreSuggestions(true);
+    }
+  };
+
+  const loadMoreSuggestions = async () => {
+    if (!hasMoreSuggestions || loadingMoreSuggestions) return;
+
+    setLoadingMoreSuggestions(true);
+    const newOffset = suggestionOffset + 50;
+    const moreSuggestions = await productService.search(newEntry.product_name, undefined, 50, newOffset);
+
+    setProductSuggestions(prev => [...prev, ...moreSuggestions]);
+    setSuggestionOffset(newOffset);
+    setHasMoreSuggestions(moreSuggestions.length === 50);
+    setLoadingMoreSuggestions(false);
+  };
+
+  const handleSuggestionScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
+
+    if (bottom && hasMoreSuggestions && !loadingMoreSuggestions) {
+      loadMoreSuggestions();
     }
   };
 
@@ -442,7 +479,10 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
             />
             
             {productSuggestions.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto">
+              <div
+                className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                onScroll={handleSuggestionScroll}
+              >
                 {productSuggestions.map((product) => (
                   <button
                     key={product.id}
@@ -456,6 +496,11 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
                     </div>
                   </button>
                 ))}
+                {loadingMoreSuggestions && (
+                  <div className="px-3 py-2 text-center text-sm text-gray-500">
+                    Ładowanie...
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Plus, Download, RefreshCw, CreditCard as Edit, Trash2, Save, X, Barcode } from 'lucide-react';
-import { FinalInventoryEntry, Inventory, Category } from '../types';
+import { FinalInventoryEntry, Inventory, Category, Product } from '../types';
 import { entryService } from '../services/entryService';
 import { categoryService } from '../services/categoryService';
 import { productService } from '../services/productService';
@@ -34,6 +34,10 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
     notes: '',
     category_id: ''
   });
+  const [productSuggestions, setProductSuggestions] = useState<Product[]>([]);
+  const [suggestionOffset, setSuggestionOffset] = useState(0);
+  const [hasMoreSuggestions, setHasMoreSuggestions] = useState(true);
+  const [loadingMoreSuggestions, setLoadingMoreSuggestions] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -111,6 +115,9 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
         notes: '',
         category_id: ''
       });
+      setProductSuggestions([]);
+      setSuggestionOffset(0);
+      setHasMoreSuggestions(true);
       await loadData();
     }
   };
@@ -139,6 +146,57 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
   const handleExportExcel = async () => {
     if (inventory) {
       await exportService.exportToExcel(inventory, entries);
+    }
+  };
+
+  const handleProductNameChange = async (value: string) => {
+    setNewEntry({...newEntry, product_name: value});
+
+    if (value.length >= 2) {
+      setSuggestionOffset(0);
+      setHasMoreSuggestions(true);
+      const suggestions = await productService.search(value, undefined, 50, 0);
+      setProductSuggestions(suggestions);
+      setHasMoreSuggestions(suggestions.length === 50);
+    } else {
+      setProductSuggestions([]);
+      setSuggestionOffset(0);
+      setHasMoreSuggestions(true);
+    }
+  };
+
+  const selectProductSuggestion = (product: Product) => {
+    setNewEntry({
+      ...newEntry,
+      product_name: product.name,
+      unit: product.unit,
+      net_price: product.net_price || 0,
+      barcode: product.barcode || '',
+      pku_w: product.pku_w || '',
+      category_id: product.category_id || newEntry.category_id
+    });
+    setProductSuggestions([]);
+  };
+
+  const loadMoreSuggestions = async () => {
+    if (!hasMoreSuggestions || loadingMoreSuggestions) return;
+
+    setLoadingMoreSuggestions(true);
+    const newOffset = suggestionOffset + 50;
+    const moreSuggestions = await productService.search(newEntry.product_name, undefined, 50, newOffset);
+
+    setProductSuggestions(prev => [...prev, ...moreSuggestions]);
+    setSuggestionOffset(newOffset);
+    setHasMoreSuggestions(moreSuggestions.length === 50);
+    setLoadingMoreSuggestions(false);
+  };
+
+  const handleSuggestionScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
+
+    if (bottom && hasMoreSuggestions && !loadingMoreSuggestions) {
+      loadMoreSuggestions();
     }
   };
 
@@ -320,17 +378,43 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
             />
           </div>
 
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Nazwa produktu *
             </label>
             <input
               type="text"
               value={newEntry.product_name}
-              onChange={(e) => setNewEntry({...newEntry, product_name: e.target.value})}
+              onChange={(e) => handleProductNameChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Wpisz nazwę produktu..."
             />
+
+            {productSuggestions.length > 0 && (
+              <div
+                className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                onScroll={handleSuggestionScroll}
+              >
+                {productSuggestions.map((product) => (
+                  <button
+                    key={product.id}
+                    onClick={() => selectProductSuggestion(product)}
+                    className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm"
+                  >
+                    <div className="font-medium">{product.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {product.barcode && `${product.barcode} • `}
+                      {product.unit} • {product.net_price?.toFixed(2) || '0.00'} zł
+                    </div>
+                  </button>
+                ))}
+                {loadingMoreSuggestions && (
+                  <div className="px-3 py-2 text-center text-sm text-gray-500">
+                    Ładowanie...
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

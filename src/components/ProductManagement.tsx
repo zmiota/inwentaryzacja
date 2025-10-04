@@ -62,6 +62,7 @@ export default function ProductManagement() {
 
     if (reset) {
       setLoading(true);
+      setHasMore(true);
     } else {
       setLoadingMore(true);
     }
@@ -179,14 +180,7 @@ export default function ProductManagement() {
     setEditingProduct(null);
   };
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = !searchQuery ||
-      product.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesBarcode = !barcodeQuery ||
-      (product.barcode && product.barcode.includes(barcodeQuery));
-    const matchesCategory = !selectedCategory || product.category_id === selectedCategory;
-    return matchesSearch && matchesBarcode && matchesCategory;
-  });
+  const filteredProducts = products;
 
   if (loading) {
     return (
@@ -271,7 +265,7 @@ export default function ProductManagement() {
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900">
-            Produkty ({filteredProducts.length})
+            Produkty ({products.length})
           </h3>
         </div>
 

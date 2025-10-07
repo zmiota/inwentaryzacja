@@ -20,7 +20,6 @@ export const exportService = {
 
       await addPolishFont(doc);
 
-      let currentY = 15;
       const margin = 14;
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
@@ -36,65 +35,73 @@ export const exportService = {
         }
       };
 
-      // Nagłówek
-      doc.setFontSize(16);
-      doc.setFont('Roboto', 'bold');
-      const title = `Arkusz spisu z natury
+      // Funkcja rysująca nagłówek - będzie wywoływana na każdej stronie
+      const drawHeader = () => {
+        let currentY = 15;
+
+        // Nagłówek
+        doc.setFontSize(16);
+        doc.setFont('Roboto', 'bold');
+        const title = `Arkusz spisu z natury
 uniwersalny`;
-      doc.text(title, pageWidth / 2, currentY, { align: 'center' });
+        doc.text(title, pageWidth / 2, currentY, { align: 'center' });
 
-      currentY += 10;
+        currentY += 10;
 
-      // Linia oddzielająca
-      doc.setLineWidth(0.5);
-      doc.line(margin, currentY, pageWidth - margin, currentY);
+        // Linia oddzielająca
+        doc.setLineWidth(0.5);
+        doc.line(margin, currentY, pageWidth - margin, currentY);
 
-      currentY += 8;
+        currentY += 8;
 
-      // Informacje górne - dwie kolumny
-      doc.setFontSize(9);
-      doc.setFont('Roboto', 'normal');
+        // Informacje górne - dwie kolumny
+        doc.setFontSize(9);
+        doc.setFont('Roboto', 'normal');
 
-      // Lewa kolumna
-      const leftColumnX = margin;
-      doc.text('Skład komisji inwentaryzacyjnej:', leftColumnX, currentY);
-      currentY += 5;
-      doc.text('Przewodniczący: .................................................', leftColumnX, currentY);
-      currentY += 4;
-      doc.text('Członek 1: .................................................', leftColumnX, currentY);
-      currentY += 4;
-      doc.text('Członek 2: .................................................', leftColumnX, currentY);
-      currentY += 6;
+        // Lewa kolumna
+        const leftColumnX = margin;
+        doc.text('Skład komisji inwentaryzacyjnej:', leftColumnX, currentY);
+        currentY += 5;
+        doc.text('Przewodniczący: .................................................', leftColumnX, currentY);
+        currentY += 4;
+        doc.text('Członek 1: .................................................', leftColumnX, currentY);
+        currentY += 4;
+        doc.text('Członek 2: .................................................', leftColumnX, currentY);
+        currentY += 6;
 
-      doc.text('Spis rozpoczęto:', leftColumnX, currentY);
-      currentY += 4;
-      doc.text('Dnia: ................. o godz: .................', leftColumnX, currentY);
+        doc.text('Spis rozpoczęto:', leftColumnX, currentY);
+        currentY += 4;
+        doc.text('Dnia: ................. o godz: .................', leftColumnX, currentY);
 
-      // Prawa kolumna - dane sklepu
-      const rightColumnX = pageWidth / 2 + 5;
-      let rightY = 33;
+        // Prawa kolumna - dane sklepu
+        const rightColumnX = pageWidth / 2 + 5;
+        let rightY = 33;
 
-      doc.setFont('Roboto', 'bold');
-      doc.text('Sklep wielobranżowy FARMER - PALEŚ', rightColumnX, rightY);
-      rightY += 4;
-      doc.setFont('Roboto', 'normal');
-      doc.text('Paweł Pawłowski ul. Kilińskiego 11', rightColumnX, rightY);
-      rightY += 4;
-      doc.text('62-410 Zagórów', rightColumnX, rightY);
-      rightY += 4;
-      doc.text('NIP 6671252482', rightColumnX, rightY);
-      rightY += 8;
+        doc.setFont('Roboto', 'bold');
+        doc.text('Sklep wielobranżowy FARMER - PALEŚ', rightColumnX, rightY);
+        rightY += 4;
+        doc.setFont('Roboto', 'normal');
+        doc.text('Paweł Pawłowski ul. Kilińskiego 11', rightColumnX, rightY);
+        rightY += 4;
+        doc.text('62-410 Zagórów', rightColumnX, rightY);
+        rightY += 4;
+        doc.text('NIP 6671252482', rightColumnX, rightY);
+        rightY += 8;
 
-      doc.text('Spis zakończono:', rightColumnX, rightY);
-      rightY += 4;
-      doc.text('Dnia: ................. o godz: .................', rightColumnX, rightY);
-      rightY += 8;
+        doc.text('Spis zakończono:', rightColumnX, rightY);
+        rightY += 4;
+        doc.text('Dnia: ................. o godz: .................', rightColumnX, rightY);
+        rightY += 8;
 
-      doc.setFont('Roboto', 'bold');
-      doc.text(`Rodzaj inwentaryzacji: końcowa za ${inventory.name}`, rightColumnX, rightY);
-      doc.setFont('Roboto', 'normal');
+        doc.setFont('Roboto', 'bold');
+        doc.text(`Rodzaj inwentaryzacji: końcowa - ${inventory.name}`, rightColumnX, rightY);
+        doc.setFont('Roboto', 'normal');
 
-      currentY = Math.max(currentY, rightY) + 8;
+        return Math.max(currentY, rightY) + 8;
+      };
+
+      // Rysuj nagłówek na pierwszej stronie
+      const tableStartY = drawHeader();
 
       // --- Tabela z danymi ---
       const tableData = entries.map((entry, index) => [
@@ -111,12 +118,11 @@ uniwersalny`;
       const totalValue = entries.reduce((sum, entry) => sum + entry.net_value, 0);
       tableData.push(['', '', '', '', '', 'SUMA NETTO:', `${totalValue.toFixed(2)} zł`]);
 
-      const tableStartY = currentY;
-
       autoTable(doc, {
         head: [['Lp', 'PKU i W', 'Nazwa produktu', 'J.m.', 'Ilość', 'Cena netto', 'Wartość netto']],
         body: tableData,
         startY: tableStartY,
+        margin: { top: 75 },
         styles: {
           fontSize: 8,
           cellPadding: 2,
@@ -145,11 +151,17 @@ uniwersalny`;
             data.cell.styles.fillColor = [220, 220, 220];
           }
         },
+        didDrawPage: function (data) {
+          // Rysuj nagłówek na każdej nowej stronie (poza pierwszą)
+          if (data.pageNumber > 1) {
+            drawHeader();
+          }
+        },
       });
 
       // Sekcja podpisów pod tabelą
-      const finalY = (doc as any).lastAutoTable.finalY || currentY;
-      currentY = finalY + 10;
+      const finalY = (doc as any).lastAutoTable.finalY || tableStartY;
+      let currentY = finalY + 10;
 
       // Linia oddzielająca
       doc.setLineWidth(0.5);
@@ -161,6 +173,9 @@ uniwersalny`;
       doc.setFont('Roboto', 'normal');
 
       // Lewa sekcja - podpisy osoby odpowiedzialnej
+      const leftColumnX = margin;
+      const rightColumnX = pageWidth / 2 + 5;
+
       doc.setFont('Roboto', 'bold');
       doc.text('Osoby odpowiedzialne materialnie:', leftColumnX, currentY);
       doc.setFont('Roboto', 'normal');

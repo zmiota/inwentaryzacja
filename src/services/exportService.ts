@@ -37,67 +37,67 @@ export const exportService = {
 
       // Funkcja rysująca nagłówek - będzie wywoływana na każdej stronie
       const drawHeader = () => {
-        let currentY = 15;
+        let currentY = 12;
+        const headerMargin = 10;
 
         // Nagłówek
-        doc.setFontSize(16);
+        doc.setFontSize(14);
         doc.setFont('Roboto', 'bold');
-        const title = `Arkusz spisu z natury
-uniwersalny`;
+        const title = `Arkusz spisu z natury uniwersalny`;
         doc.text(title, pageWidth / 2, currentY, { align: 'center' });
-
-        currentY += 10;
-
-        // Linia oddzielająca
-        doc.setLineWidth(0.5);
-        doc.line(margin, currentY, pageWidth - margin, currentY);
 
         currentY += 8;
 
+        // Linia oddzielająca
+        doc.setLineWidth(0.5);
+        doc.line(headerMargin, currentY, pageWidth - headerMargin, currentY);
+
+        currentY += 6;
+
         // Informacje górne - dwie kolumny
-        doc.setFontSize(9);
+        doc.setFontSize(8);
         doc.setFont('Roboto', 'normal');
 
         // Lewa kolumna
-        const leftColumnX = margin;
+        const leftColumnX = headerMargin;
         doc.text('Skład komisji inwentaryzacyjnej:', leftColumnX, currentY);
+        currentY += 4;
+        doc.text('Przewodniczący: ........................................', leftColumnX, currentY);
+        currentY += 3.5;
+        doc.text('Członek 1: ........................................', leftColumnX, currentY);
+        currentY += 3.5;
+        doc.text('Członek 2: ........................................', leftColumnX, currentY);
         currentY += 5;
-        doc.text('Przewodniczący: .................................................', leftColumnX, currentY);
-        currentY += 4;
-        doc.text('Członek 1: .................................................', leftColumnX, currentY);
-        currentY += 4;
-        doc.text('Członek 2: .................................................', leftColumnX, currentY);
-        currentY += 6;
 
         doc.text('Spis rozpoczęto:', leftColumnX, currentY);
-        currentY += 4;
-        doc.text('Dnia: ................. o godz: .................', leftColumnX, currentY);
+        currentY += 3.5;
+        doc.text('Dnia: ............... o godz: ...............', leftColumnX, currentY);
 
         // Prawa kolumna - dane sklepu
         const rightColumnX = pageWidth / 2 + 5;
-        let rightY = 33;
+        let rightY = 26;
 
         doc.setFont('Roboto', 'bold');
         doc.text('Sklep wielobranżowy FARMER - PALEŚ', rightColumnX, rightY);
-        rightY += 4;
+        rightY += 3.5;
         doc.setFont('Roboto', 'normal');
         doc.text('Paweł Pawłowski ul. Kilińskiego 11', rightColumnX, rightY);
-        rightY += 4;
+        rightY += 3.5;
         doc.text('62-410 Zagórów', rightColumnX, rightY);
-        rightY += 4;
+        rightY += 3.5;
         doc.text('NIP 6671252482', rightColumnX, rightY);
-        rightY += 8;
+        rightY += 6;
 
         doc.text('Spis zakończono:', rightColumnX, rightY);
-        rightY += 4;
-        doc.text('Dnia: ................. o godz: .................', rightColumnX, rightY);
-        rightY += 8;
+        rightY += 3.5;
+        doc.text('Dnia: ............... o godz: ...............', rightColumnX, rightY);
+        rightY += 6;
 
         doc.setFont('Roboto', 'bold');
         doc.text(`Rodzaj inwentaryzacji: końcowa - ${inventory.name}`, rightColumnX, rightY);
         doc.setFont('Roboto', 'normal');
 
-        return Math.max(currentY, rightY) + 8;
+        return Math.max(currentY, rightY) + 6;
       };
 
       // Rysuj nagłówek na pierwszej stronie
@@ -122,28 +122,31 @@ uniwersalny`;
         head: [['Lp', 'PKU i W', 'Nazwa produktu', 'J.m.', 'Ilość', 'Cena netto', 'Wartość netto']],
         body: tableData,
         startY: tableStartY,
-        margin: { top: 75 },
+        margin: { top: 60, left: 10, right: 10 },
         styles: {
-          fontSize: 8,
-          cellPadding: 2,
+          fontSize: 7,
+          cellPadding: 1.5,
           lineWidth: 0.1,
           lineColor: [0, 0, 0],
-          font: 'Roboto'
+          font: 'Roboto',
+          overflow: 'linebreak',
+          cellWidth: 'wrap'
         },
         headStyles: {
           fillColor: [66, 139, 202],
           textColor: 255,
           fontStyle: 'normal',
-          font: 'Roboto'
+          font: 'Roboto',
+          fontSize: 7
         },
         columnStyles: {
-          0: { halign: 'center', cellWidth: 10 },
-          1: { cellWidth: 20 },
-          2: { cellWidth: 70 },
-          3: { halign: 'center', cellWidth: 15 },
-          4: { halign: 'right', cellWidth: 15 },
-          5: { halign: 'right', cellWidth: 25 },
-          6: { halign: 'right', cellWidth: 27 },
+          0: { halign: 'center', cellWidth: 8 },
+          1: { cellWidth: 18 },
+          2: { cellWidth: 75 },
+          3: { halign: 'center', cellWidth: 12 },
+          4: { halign: 'right', cellWidth: 14 },
+          5: { halign: 'right', cellWidth: 22 },
+          6: { halign: 'right', cellWidth: 24 },
         },
         didParseCell: function (data) {
           if (data.row.index === tableData.length - 1) {

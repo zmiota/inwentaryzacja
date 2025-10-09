@@ -122,7 +122,7 @@ export const exportService = {
         head: [['Lp', 'PKU i W', 'Nazwa produktu', 'J.m.', 'Ilość', 'Cena netto', 'Wartość netto']],
         body: tableData,
         startY: tableStartY,
-        margin: { top: 60, left: 10, right: 10 },
+        margin: { top: 15, left: 10, right: 10 },
         styles: {
           fontSize: 7,
           cellPadding: 1.5,
@@ -154,49 +154,54 @@ export const exportService = {
             data.cell.styles.fillColor = [220, 220, 220];
           }
         },
-        didDrawPage: function (data) {
-          // Rysuj nagłówek na każdej nowej stronie (poza pierwszą)
-          if (data.pageNumber > 1) {
-            drawHeader();
-          }
-        },
       });
 
       // Sekcja podpisów pod tabelą
       const finalY = (doc as any).lastAutoTable.finalY || tableStartY;
-      let currentY = finalY + 10;
+      const currentPageNumber = doc.getCurrentPageInfo().pageNumber;
+      let currentY: number;
+
+      // Jeśli tabela zajęła więcej niż 1 stronę, ostatnia strona powinna mieć nagłówek
+      if (currentPageNumber > 1) {
+        // Dodaj nową stronę z nagłówkiem i podpisami
+        doc.addPage();
+        currentY = drawHeader() + 5;
+      } else {
+        // Wszystko na pierwszej stronie - podpisy bezpośrednio pod tabelą
+        currentY = finalY + 10;
+      }
 
       // Linia oddzielająca
       doc.setLineWidth(0.5);
-      doc.line(margin, currentY, pageWidth - margin, currentY);
+      doc.line(10, currentY, pageWidth - 10, currentY);
 
       currentY += 8;
 
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setFont('Roboto', 'normal');
 
       // Lewa sekcja - podpisy osoby odpowiedzialnej
-      const leftColumnX = margin;
+      const leftColumnX = 10;
       const rightColumnX = pageWidth / 2 + 5;
 
       doc.setFont('Roboto', 'bold');
       doc.text('Osoby odpowiedzialne materialnie:', leftColumnX, currentY);
       doc.setFont('Roboto', 'normal');
-      currentY += 6;
+      currentY += 5;
 
       doc.text('Wycenił:', leftColumnX, currentY);
+      currentY += 3.5;
+      doc.text('Imię i nazwisko: ..............................................', leftColumnX + 2, currentY);
       currentY += 4;
-      doc.text('Imię i nazwisko: ....................................................', leftColumnX + 2, currentY);
-      currentY += 5;
-      doc.text('Podpis: ....................................................', leftColumnX + 2, currentY);
+      doc.text('Podpis: ..............................................', leftColumnX + 2, currentY);
 
       // Prawa sekcja - podpisy komisji
-      const signatureY = finalY + 16;
+      const signatureY = currentY - 8;
       doc.setFont('Roboto', 'bold');
       doc.text('Podpisy komisji inwentaryzacyjnej:', rightColumnX, signatureY);
       doc.setFont('Roboto', 'normal');
 
-      let signY = signatureY + 6;
+      let signY = signatureY + 5;
 
       if (commission.length > 0) {
         commission.forEach((member, index) => {
@@ -205,18 +210,18 @@ export const exportService = {
           } else {
             doc.text(`Członek: ${member.name}`, rightColumnX, signY);
           }
-          signY += 4;
-          doc.text('Podpis: ....................................', rightColumnX + 2, signY);
-          signY += 6;
+          signY += 3.5;
+          doc.text('Podpis: ................................', rightColumnX + 2, signY);
+          signY += 5;
         });
       } else {
-        doc.text('Przewodniczący: ....................................', rightColumnX, signY);
-        signY += 4;
-        doc.text('Podpis: ....................................', rightColumnX + 2, signY);
-        signY += 6;
-        doc.text('Członek: ....................................', rightColumnX, signY);
-        signY += 4;
-        doc.text('Podpis: ....................................', rightColumnX + 2, signY);
+        doc.text('Przewodniczący: ................................', rightColumnX, signY);
+        signY += 3.5;
+        doc.text('Podpis: ................................', rightColumnX + 2, signY);
+        signY += 5;
+        doc.text('Członek: ................................', rightColumnX, signY);
+        signY += 3.5;
+        doc.text('Podpis: ................................', rightColumnX + 2, signY);
       }
 
       // Dodaj numerację stron

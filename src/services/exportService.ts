@@ -37,67 +37,67 @@ export const exportService = {
 
       // Funkcja rysująca nagłówek - będzie wywoływana na każdej stronie
       const drawHeader = () => {
-        let currentY = 12;
-        const headerMargin = 10;
+        let currentY = 15;
 
         // Nagłówek
-        doc.setFontSize(14);
+        doc.setFontSize(16);
         doc.setFont('Roboto', 'bold');
-        const title = `Arkusz spisu z natury uniwersalny`;
+        const title = `Arkusz spisu z natury
+uniwersalny`;
         doc.text(title, pageWidth / 2, currentY, { align: 'center' });
 
-        currentY += 8;
+        currentY += 10;
 
         // Linia oddzielająca
         doc.setLineWidth(0.5);
-        doc.line(headerMargin, currentY, pageWidth - headerMargin, currentY);
+        doc.line(margin, currentY, pageWidth - margin, currentY);
 
-        currentY += 6;
+        currentY += 8;
 
         // Informacje górne - dwie kolumny
-        doc.setFontSize(8);
+        doc.setFontSize(9);
         doc.setFont('Roboto', 'normal');
 
         // Lewa kolumna
-        const leftColumnX = headerMargin;
+        const leftColumnX = margin;
         doc.text('Skład komisji inwentaryzacyjnej:', leftColumnX, currentY);
-        currentY += 4;
-        doc.text('Przewodniczący: ........................................', leftColumnX, currentY);
-        currentY += 3.5;
-        doc.text('Członek 1: ........................................', leftColumnX, currentY);
-        currentY += 3.5;
-        doc.text('Członek 2: ........................................', leftColumnX, currentY);
         currentY += 5;
+        doc.text('Przewodniczący: .................................................', leftColumnX, currentY);
+        currentY += 4;
+        doc.text('Członek 1: .................................................', leftColumnX, currentY);
+        currentY += 4;
+        doc.text('Członek 2: .................................................', leftColumnX, currentY);
+        currentY += 6;
 
         doc.text('Spis rozpoczęto:', leftColumnX, currentY);
-        currentY += 3.5;
-        doc.text('Dnia: ............... o godz: ...............', leftColumnX, currentY);
+        currentY += 4;
+        doc.text('Dnia: ................. o godz: .................', leftColumnX, currentY);
 
         // Prawa kolumna - dane sklepu
         const rightColumnX = pageWidth / 2 + 5;
-        let rightY = 26;
+        let rightY = 33;
 
         doc.setFont('Roboto', 'bold');
         doc.text('Sklep wielobranżowy FARMER - PALEŚ', rightColumnX, rightY);
-        rightY += 3.5;
+        rightY += 4;
         doc.setFont('Roboto', 'normal');
         doc.text('Paweł Pawłowski ul. Kilińskiego 11', rightColumnX, rightY);
-        rightY += 3.5;
+        rightY += 4;
         doc.text('62-410 Zagórów', rightColumnX, rightY);
-        rightY += 3.5;
+        rightY += 4;
         doc.text('NIP 6671252482', rightColumnX, rightY);
-        rightY += 6;
+        rightY += 8;
 
         doc.text('Spis zakończono:', rightColumnX, rightY);
-        rightY += 3.5;
-        doc.text('Dnia: ............... o godz: ...............', rightColumnX, rightY);
-        rightY += 6;
+        rightY += 4;
+        doc.text('Dnia: ................. o godz: .................', rightColumnX, rightY);
+        rightY += 8;
 
         doc.setFont('Roboto', 'bold');
         doc.text(`Rodzaj inwentaryzacji: końcowa - ${inventory.name}`, rightColumnX, rightY);
         doc.setFont('Roboto', 'normal');
 
-        return Math.max(currentY, rightY) + 6;
+        return Math.max(currentY, rightY) + 8;
       };
 
       // Rysuj nagłówek na pierwszej stronie
@@ -122,32 +122,28 @@ export const exportService = {
         head: [['Lp', 'PKU i W', 'Nazwa produktu', 'J.m.', 'Ilość', 'Cena netto', 'Wartość netto']],
         body: tableData,
         startY: tableStartY,
-        margin: { top: tableStartY, left: 10, right: 10, bottom: 15 },
-        showHead: 'everyPage',
+        margin: { top: 75 },
         styles: {
-          fontSize: 7,
-          cellPadding: 1.5,
+          fontSize: 8,
+          cellPadding: 2,
           lineWidth: 0.1,
           lineColor: [0, 0, 0],
-          font: 'Roboto',
-          overflow: 'linebreak',
-          cellWidth: 'wrap'
+          font: 'Roboto'
         },
         headStyles: {
           fillColor: [66, 139, 202],
           textColor: 255,
           fontStyle: 'normal',
-          font: 'Roboto',
-          fontSize: 7
+          font: 'Roboto'
         },
         columnStyles: {
-          0: { halign: 'center', cellWidth: 8 },
-          1: { cellWidth: 18 },
-          2: { cellWidth: 75 },
-          3: { halign: 'center', cellWidth: 12 },
-          4: { halign: 'right', cellWidth: 14 },
-          5: { halign: 'right', cellWidth: 22 },
-          6: { halign: 'right', cellWidth: 24 },
+          0: { halign: 'center', cellWidth: 10 },
+          1: { cellWidth: 20 },
+          2: { cellWidth: 70 },
+          3: { halign: 'center', cellWidth: 15 },
+          4: { halign: 'right', cellWidth: 15 },
+          5: { halign: 'right', cellWidth: 25 },
+          6: { halign: 'right', cellWidth: 27 },
         },
         didParseCell: function (data) {
           if (data.row.index === tableData.length - 1) {
@@ -156,64 +152,48 @@ export const exportService = {
           }
         },
         didDrawPage: function (data) {
-          // Rysuj nagłówek dokumentu na każdej stronie
+          // Rysuj nagłówek na każdej nowej stronie (poza pierwszą)
           if (data.pageNumber > 1) {
             drawHeader();
           }
         },
       });
 
-      // Pobierz informacje o zakończeniu tabeli
+      // Sekcja podpisów pod tabelą
       const finalY = (doc as any).lastAutoTable.finalY || tableStartY;
-      const totalPages = doc.getNumberOfPages();
-
-      // Sprawdź, czy na ostatniej stronie jest dość miejsca na podpisy
-      // Jeśli nie, dodaj nową stronę z nagłówkiem
-      const spaceNeeded = 60; // przestrzeń potrzebna na podpisy
-      const spaceAvailable = pageHeight - finalY;
-
-      let currentY: number;
-
-      if (spaceAvailable < spaceNeeded) {
-        // Za mało miejsca - dodaj nową stronę z nagłówkiem i podpisami
-        doc.addPage();
-        currentY = drawHeader() + 5;
-      } else {
-        // Jest miejsce - podpisy bezpośrednio pod tabelą
-        currentY = finalY + 10;
-      }
+      let currentY = finalY + 10;
 
       // Linia oddzielająca
       doc.setLineWidth(0.5);
-      doc.line(10, currentY, pageWidth - 10, currentY);
+      doc.line(margin, currentY, pageWidth - margin, currentY);
 
       currentY += 8;
 
-      doc.setFontSize(8);
+      doc.setFontSize(9);
       doc.setFont('Roboto', 'normal');
 
       // Lewa sekcja - podpisy osoby odpowiedzialnej
-      const leftColumnX = 10;
+      const leftColumnX = margin;
       const rightColumnX = pageWidth / 2 + 5;
 
       doc.setFont('Roboto', 'bold');
       doc.text('Osoby odpowiedzialne materialnie:', leftColumnX, currentY);
       doc.setFont('Roboto', 'normal');
-      currentY += 5;
+      currentY += 6;
 
       doc.text('Wycenił:', leftColumnX, currentY);
-      currentY += 3.5;
-      doc.text('Imię i nazwisko: ..............................................', leftColumnX + 2, currentY);
       currentY += 4;
-      doc.text('Podpis: ..............................................', leftColumnX + 2, currentY);
+      doc.text('Imię i nazwisko: ....................................................', leftColumnX + 2, currentY);
+      currentY += 5;
+      doc.text('Podpis: ....................................................', leftColumnX + 2, currentY);
 
       // Prawa sekcja - podpisy komisji
-      const signatureY = currentY - 8;
+      const signatureY = finalY + 16;
       doc.setFont('Roboto', 'bold');
       doc.text('Podpisy komisji inwentaryzacyjnej:', rightColumnX, signatureY);
       doc.setFont('Roboto', 'normal');
 
-      let signY = signatureY + 5;
+      let signY = signatureY + 6;
 
       if (commission.length > 0) {
         commission.forEach((member, index) => {
@@ -222,18 +202,18 @@ export const exportService = {
           } else {
             doc.text(`Członek: ${member.name}`, rightColumnX, signY);
           }
-          signY += 3.5;
-          doc.text('Podpis: ................................', rightColumnX + 2, signY);
-          signY += 5;
+          signY += 4;
+          doc.text('Podpis: ....................................', rightColumnX + 2, signY);
+          signY += 6;
         });
       } else {
-        doc.text('Przewodniczący: ................................', rightColumnX, signY);
-        signY += 3.5;
-        doc.text('Podpis: ................................', rightColumnX + 2, signY);
-        signY += 5;
-        doc.text('Członek: ................................', rightColumnX, signY);
-        signY += 3.5;
-        doc.text('Podpis: ................................', rightColumnX + 2, signY);
+        doc.text('Przewodniczący: ....................................', rightColumnX, signY);
+        signY += 4;
+        doc.text('Podpis: ....................................', rightColumnX + 2, signY);
+        signY += 6;
+        doc.text('Członek: ....................................', rightColumnX, signY);
+        signY += 4;
+        doc.text('Podpis: ....................................', rightColumnX + 2, signY);
       }
 
       // Dodaj numerację stron

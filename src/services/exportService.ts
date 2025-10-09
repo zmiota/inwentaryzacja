@@ -118,6 +118,8 @@ export const exportService = {
       const totalValue = entries.reduce((sum, entry) => sum + entry.net_value, 0);
       tableData.push(['', '', '', '', '', 'SUMA NETTO:', `${totalValue.toFixed(2)} zł`]);
 
+      let firstPage = true;
+
       autoTable(doc, {
         head: [['Lp', 'PKU i W', 'Nazwa produktu', 'J.m.', 'Ilość', 'Cena netto', 'Wartość netto']],
         body: tableData,
@@ -153,6 +155,14 @@ export const exportService = {
             data.cell.styles.fontStyle = 'bold';
             data.cell.styles.fillColor = [220, 220, 220];
           }
+        },
+        didDrawPage: function (data) {
+          // Dodaj nagłówek na każdej nowej stronie poza pierwszą
+          if (!firstPage) {
+            const headerHeight = drawHeader();
+            data.settings.startY = headerHeight;
+          }
+          firstPage = false;
         },
       });
 

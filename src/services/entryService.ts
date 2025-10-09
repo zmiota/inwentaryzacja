@@ -118,11 +118,6 @@ export const entryService = {
         unit: entry.unit,
         quantity: entry.quantity,
         net_price: entry.net_price,
-        pku_w: entry.pku_w || '',
-        barcode: entry.barcode || null,
-        invoice_number: entry.invoice_number || null,
-        notes: entry.notes || null,
-        category_id: entry.category_id || null,
       }));
 
       const { error: insertError } = await supabase

@@ -20,92 +20,70 @@ export const exportService = {
 
       await addPolishFont(doc);
 
+      let currentY = 15;
       const margin = 14;
       const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
 
-      // Funkcja do dodawania numeracji strony w prawym górnym rogu
-      const addPageNumber = () => {
-        const pageCount = doc.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-          doc.setPage(i);
-          doc.setFontSize(10);
-          doc.setFont('Roboto', 'normal');
-          doc.text(`str ${i}`, pageWidth - margin - 5, 10, { align: 'right' });
-        }
-      };
+      // Nagłówek
+      doc.setFontSize(16);
+      doc.setFont('Roboto', 'bold');
+      const title = `Inwentaryzacja końcowa - ${inventory.name}`;
+      doc.text(title, pageWidth / 2, currentY, { align: 'center' });
 
-      // Funkcja rysująca nagłówek - będzie wywoływana na każdej stronie
-      const drawHeader = () => {
-        let currentY = 15;
+      currentY += 10;
 
-        // Nagłówek
-        doc.setFontSize(16);
-        doc.setFont('Roboto', 'bold');
-        const title = `Arkusz spisu z natury
-uniwersalny`;
-        doc.text(title, pageWidth / 2, currentY, { align: 'center' });
+      // Linia oddzielająca
+      doc.setDrawColor(66, 139, 202);
+      doc.setLineWidth(0.5);
+      doc.line(margin, currentY, pageWidth - margin, currentY);
 
-        currentY += 10;
+      currentY += 8;
 
-        // Linia oddzielająca
-        doc.setLineWidth(0.5);
-        doc.line(margin, currentY, pageWidth - margin, currentY);
+      // Informacje górne - dwie kolumny
+      doc.setFontSize(9);
+      doc.setFont('Roboto', 'normal');
 
-        currentY += 8;
+      // Lewa kolumna
+      const leftColumnX = margin;
+      doc.text('Skład komisji inwentaryzacyjnej:', leftColumnX, currentY);
+      currentY += 5;
 
-        // Informacje górne - dwie kolumny
-        doc.setFontSize(9);
-        doc.setFont('Roboto', 'normal');
+      commission.forEach((member) => {
+        doc.text(`• ${member.name} (${member.role === 'chairman' ? 'Przewodniczący' : 'Członek'})`, leftColumnX + 2, currentY);
+        currentY += 4;
+      });
 
-        // Lewa kolumna
-        const leftColumnX = margin;
-        doc.text('Skład komisji inwentaryzacyjnej:', leftColumnX, currentY);
+      if (commission.length === 0) {
+        doc.text('Przewodniczący: .................................................', leftColumnX + 2, currentY);
         currentY += 5;
-        doc.text('Przewodniczący: .................................................', leftColumnX, currentY);
-        currentY += 4;
-        doc.text('Członek 1: .................................................', leftColumnX, currentY);
-        currentY += 4;
-        doc.text('Członek 2: .................................................', leftColumnX, currentY);
-        currentY += 6;
+        doc.text('Członek 1: .................................................', leftColumnX + 2, currentY);
+        currentY += 5;
+        doc.text('Członek 2: .................................................', leftColumnX + 2, currentY);
+        currentY += 5;
+      }
 
-        doc.text('Spis rozpoczęto:', leftColumnX, currentY);
-        currentY += 4;
-        doc.text('Dnia: ................. o godz: .................', leftColumnX, currentY);
+      // Prawa kolumna
+      const rightColumnStart = 33;
+      const rightColumnX = pageWidth / 2 + 5;
 
-        // Prawa kolumna - dane sklepu
-        const rightColumnX = pageWidth / 2 + 5;
-        let rightY = 33;
+      doc.text('Rodzaj inwentaryzacji:', rightColumnX, rightColumnStart);
+      doc.text(inventory.inventory_method || '...........................', rightColumnX + 2, rightColumnStart + 5);
 
-        doc.setFont('Roboto', 'bold');
-        doc.text('Sklep wielobranżowy FARMER - PALEŚ', rightColumnX, rightY);
-        rightY += 4;
-        doc.setFont('Roboto', 'normal');
-        doc.text('Paweł Pawłowski ul. Kilińskiego 11', rightColumnX, rightY);
-        rightY += 4;
-        doc.text('62-410 Zagórów', rightColumnX, rightY);
-        rightY += 4;
-        doc.text('NIP 6671252482', rightColumnX, rightY);
-        rightY += 8;
+      doc.text('Sposób przeprowadzenia:', rightColumnX, rightColumnStart + 10);
+      doc.text(inventory.type === 'final' ? 'Końcowa' : 'Wstępna', rightColumnX + 2, rightColumnStart + 15);
 
-        doc.text('Spis zakończono:', rightColumnX, rightY);
-        rightY += 4;
-        doc.text('Dnia: ................. o godz: .................', rightColumnX, rightY);
-        rightY += 8;
+      doc.text('Spis rozpoczęto:', rightColumnX, rightColumnStart + 20);
+      doc.text('Dnia: ................. o godz: .................', rightColumnX + 2, rightColumnStart + 25);
 
-        doc.setFont('Roboto', 'bold');
-        doc.text(`Rodzaj inwentaryzacji: końcowa - ${inventory.name}`, rightColumnX, rightY);
-        doc.setFont('Roboto', 'normal');
+      doc.text('Spis zakończono:', rightColumnX, rightColumnStart + 30);
+      doc.text('Dnia: ................. o godz: .................', rightColumnX + 2, rightColumnStart + 35);
 
-        return Math.max(currentY, rightY) + 8;
-      };
+      // Ustaw startY dla tabeli
+      const tableStartY = Math.max(currentY + 5, rightColumnStart + 43);
 
-      // Rysuj nagłówek na pierwszej stronie
-      const tableStartY = drawHeader();
-
-      // --- Tabela z danymi ---
+      // Tabela z danymi
       const tableData = entries.map((entry, index) => [
-        (index + 1).toString(), // Lp
+        (index + 1).toString(),
         entry.pku_w || '-',
         entry.product_name || '',
         entry.unit,
@@ -122,49 +100,48 @@ uniwersalny`;
         head: [['Lp', 'PKU i W', 'Nazwa produktu', 'J.m.', 'Ilość', 'Cena netto', 'Wartość netto']],
         body: tableData,
         startY: tableStartY,
-        margin: { top: 75 },
         styles: {
           fontSize: 8,
           cellPadding: 2,
           lineWidth: 0.1,
           lineColor: [0, 0, 0],
-          font: 'Roboto'
+          font: 'Roboto',
+          overflow: 'linebreak'
         },
         headStyles: {
           fillColor: [66, 139, 202],
           textColor: 255,
-          fontStyle: 'normal',
-          font: 'Roboto'
+          fontStyle: 'bold',
+          font: 'Roboto',
+          halign: 'center'
         },
         columnStyles: {
           0: { halign: 'center', cellWidth: 10 },
           1: { cellWidth: 20 },
           2: { cellWidth: 70 },
-          3: { halign: 'center', cellWidth: 15 },
-          4: { halign: 'right', cellWidth: 15 },
-          5: { halign: 'right', cellWidth: 25 },
-          6: { halign: 'right', cellWidth: 27 },
+          3: { halign: 'center', cellWidth: 12 },
+          4: { halign: 'center', cellWidth: 15 },
+          5: { halign: 'right', cellWidth: 30 },
+          6: { halign: 'right', cellWidth: 30 },
         },
         didParseCell: function (data) {
           if (data.row.index === tableData.length - 1) {
             data.cell.styles.fontStyle = 'bold';
-            data.cell.styles.fillColor = [220, 220, 220];
+            data.cell.styles.fillColor = [240, 240, 240];
+            data.cell.styles.fontSize = 9;
           }
         },
-        didDrawPage: function (data) {
-          // Rysuj nagłówek na każdej nowej stronie (poza pierwszą)
-          if (data.pageNumber > 1) {
-            drawHeader();
-          }
-        },
+        margin: { left: margin, right: margin }
       });
 
-      // Sekcja podpisów pod tabelą
-      const finalY = (doc as any).lastAutoTable.finalY || tableStartY;
-      let currentY = finalY + 10;
+      // Pola pod tabelą
+      const finalY = (doc as any).lastAutoTable.finalY || tableStartY + 20;
+
+      currentY = finalY + 10;
 
       // Linia oddzielająca
-      doc.setLineWidth(0.5);
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.3);
       doc.line(margin, currentY, pageWidth - margin, currentY);
 
       currentY += 8;
@@ -173,15 +150,19 @@ uniwersalny`;
       doc.setFont('Roboto', 'normal');
 
       // Lewa sekcja - podpisy osoby odpowiedzialnej
-      const leftColumnX = margin;
-      const rightColumnX = pageWidth / 2 + 5;
-
       doc.setFont('Roboto', 'bold');
       doc.text('Osoby odpowiedzialne materialnie:', leftColumnX, currentY);
       doc.setFont('Roboto', 'normal');
       currentY += 6;
 
       doc.text('Wycenił:', leftColumnX, currentY);
+      currentY += 4;
+      doc.text('Imię i nazwisko: ....................................................', leftColumnX + 2, currentY);
+      currentY += 5;
+      doc.text('Podpis: ....................................................', leftColumnX + 2, currentY);
+      currentY += 7;
+
+      doc.text('Sprawdził:', leftColumnX, currentY);
       currentY += 4;
       doc.text('Imię i nazwisko: ....................................................', leftColumnX + 2, currentY);
       currentY += 5;
@@ -196,30 +177,41 @@ uniwersalny`;
       let signY = signatureY + 6;
 
       if (commission.length > 0) {
-        commission.forEach((member, index) => {
-          if (index === 0) {
-            doc.text(`Przewodniczący: ${member.name}`, rightColumnX, signY);
-          } else {
-            doc.text(`Członek: ${member.name}`, rightColumnX, signY);
-          }
+        commission.forEach((member) => {
+          doc.text(`${member.role === 'chairman' ? 'Przewodniczący:' : 'Członek:'}`, rightColumnX, signY);
           signY += 4;
-          doc.text('Podpis: ....................................', rightColumnX + 2, signY);
-          signY += 6;
+          doc.text(`${member.name}`, rightColumnX + 2, signY);
+          signY += 4;
+          doc.text('Podpis: ........................................', rightColumnX + 2, signY);
+          signY += 7;
         });
       } else {
-        doc.text('Przewodniczący: ....................................', rightColumnX, signY);
+        doc.text('Przewodniczący:', rightColumnX, signY);
         signY += 4;
-        doc.text('Podpis: ....................................', rightColumnX + 2, signY);
-        signY += 6;
-        doc.text('Członek: ....................................', rightColumnX, signY);
+        doc.text('Imię i nazwisko: ........................................', rightColumnX + 2, signY);
         signY += 4;
-        doc.text('Podpis: ....................................', rightColumnX + 2, signY);
+        doc.text('Podpis: ........................................', rightColumnX + 2, signY);
+        signY += 7;
+
+        doc.text('Członek:', rightColumnX, signY);
+        signY += 4;
+        doc.text('Imię i nazwisko: ........................................', rightColumnX + 2, signY);
+        signY += 4;
+        doc.text('Podpis: ........................................', rightColumnX + 2, signY);
       }
 
-      // Dodaj numerację stron
-      addPageNumber();
+      // Stopka
+      const footerY = doc.internal.pageSize.getHeight() - 10;
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(
+        `Wygenerowano: ${new Date().toLocaleString('pl-PL')}`,
+        pageWidth / 2,
+        footerY,
+        { align: 'center' }
+      );
 
-      // --- Zapisz plik ---
+      // Zapisz plik
       const fileName = `inwentaryzacja_koncowa_${inventory.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
       doc.save(fileName);
     } catch (error) {

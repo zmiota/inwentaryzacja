@@ -7,7 +7,6 @@ import { productService } from '../services/productService';
 import { ocrService } from '../services/ocrService';
 import LoadingSpinner from './ui/LoadingSpinner';
 import Modal from './ui/Modal';
-import { useNotification } from '../contexts/NotificationContext';
 
 interface PreliminaryInventoryProps {
   inventoryId: string;
@@ -15,7 +14,6 @@ interface PreliminaryInventoryProps {
 }
 
 export default function PreliminaryInventory({ inventoryId, onNavigate }: PreliminaryInventoryProps) {
-  const { showToast, showConfirm } = useNotification();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [entries, setEntries] = useState<InventoryEntry[]>([]);
@@ -24,9 +22,6 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   const [showOCRModal, setShowOCRModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<InventoryEntry | null>(null);
   const [productSuggestions, setProductSuggestions] = useState<Product[]>([]);
-  const [suggestionOffset, setSuggestionOffset] = useState(0);
-  const [hasMoreSuggestions, setHasMoreSuggestions] = useState(true);
-  const [loadingMoreSuggestions, setLoadingMoreSuggestions] = useState(false);
   const [newEntry, setNewEntry] = useState({
     pku_w: '',
     product_name: '',
@@ -35,8 +30,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     net_price: 0,
     invoice_number: '',
     barcode: '',
-    notes: '',
-    category_id: ''
+    notes: ''
   });
 
   useEffect(() => {
@@ -64,103 +58,51 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     setEntries(data);
   };
 
-  const resetEntryForm = () => {
-    setNewEntry({
-      pku_w: '',
-      product_name: '',
-      unit: 'szt',
-      quantity: 0,
-      net_price: 0,
-      invoice_number: '',
-      barcode: '',
-      notes: '',
-      category_id: selectedCategory
-    });
-    setEditingEntry(null);
-    setProductSuggestions([]);
-    setSuggestionOffset(0);
-    setHasMoreSuggestions(true);
-  };
-
   const handleProductNameChange = async (value: string) => {
     setNewEntry({...newEntry, product_name: value});
-
+    
     if (value.length >= 2) {
-      setSuggestionOffset(0);
-      setHasMoreSuggestions(true);
-      const suggestions = await productService.search(value, undefined, 50, 0);
+      const suggestions = await productService.search(value, selectedCategory);
       setProductSuggestions(suggestions);
-      setHasMoreSuggestions(suggestions.length === 50);
     } else {
       setProductSuggestions([]);
-      setSuggestionOffset(0);
-      setHasMoreSuggestions(true);
     }
   };
 
   const selectProductSuggestion = (product: Product) => {
     setNewEntry({
       ...newEntry,
+      pku_w: product.pku_w || '',
       product_name: product.name,
       unit: product.unit,
       net_price: product.net_price || 0,
-      barcode: product.barcode || '',
-      pku_w: product.pku_w || '',
-      category_id: product.category_id || newEntry.category_id
+      barcode: product.barcode || ''
     });
     setProductSuggestions([]);
   };
 
   const handleBarcodeInput = async (barcode: string) => {
-    if (!barcode || barcode.length < 3) return;
+    if (!barcode) return;
 
     const product = await productService.getByBarcode(barcode);
     if (product) {
       setNewEntry({
         ...newEntry,
+        pku_w: product.pku_w || '',
         product_name: product.name,
         unit: product.unit,
         net_price: product.net_price || 0,
-        barcode: barcode,
-        pku_w: product.pku_w || '',
-        category_id: product.category_id || newEntry.category_id
+        barcode: barcode
       });
     }
   };
 
   const handleBarcodeOrNameSearch = async (value: string) => {
     if (value.length >= 2) {
-      setSuggestionOffset(0);
-      setHasMoreSuggestions(true);
-      const suggestions = await productService.search(value, undefined, 50, 0);
+      const suggestions = await productService.search(value);
       setProductSuggestions(suggestions);
-      setHasMoreSuggestions(suggestions.length === 50);
     } else {
       setProductSuggestions([]);
-      setSuggestionOffset(0);
-      setHasMoreSuggestions(true);
-    }
-  };
-
-  const loadMoreSuggestions = async () => {
-    if (!hasMoreSuggestions || loadingMoreSuggestions) return;
-
-    setLoadingMoreSuggestions(true);
-    const newOffset = suggestionOffset + 50;
-    const moreSuggestions = await productService.search(newEntry.product_name, undefined, 50, newOffset);
-
-    setProductSuggestions(prev => [...prev, ...moreSuggestions]);
-    setSuggestionOffset(newOffset);
-    setHasMoreSuggestions(moreSuggestions.length === 50);
-    setLoadingMoreSuggestions(false);
-  };
-
-  const handleSuggestionScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.currentTarget;
-    const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
-
-    if (bottom && hasMoreSuggestions && !loadingMoreSuggestions) {
-      loadMoreSuggestions();
     }
   };
 
@@ -174,8 +116,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       net_price: entry.net_price,
       invoice_number: entry.invoice_number || '',
       barcode: entry.barcode || '',
-      notes: entry.notes || '',
-      category_id: entry.category_id || selectedCategory
+      notes: entry.notes || ''
     });
     setShowAddModal(true);
   };
@@ -183,57 +124,63 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   const handleSubmitEntry = async () => {
     if (!newEntry.product_name || !selectedCategory) return;
 
-    const categoryToUse = newEntry.category_id || selectedCategory;
-
-    if (!categoryToUse) {
-      showToast('Kategoria jest wymagana', 'error');
-      return;
-    }
-
     let entry;
     if (editingEntry) {
-      entry = await entryService.updatePreliminaryEntry(editingEntry.id, {
-        ...newEntry,
-        category_id: categoryToUse
-      });
+      // Aktualizuj istniejący wpis
+      entry = await entryService.updatePreliminaryEntry(editingEntry.id, newEntry);
     } else {
+      // Utwórz nowy wpis
       entry = await entryService.createPreliminaryEntry({
         inventory_id: inventoryId,
-        category_id: categoryToUse,
+        category_id: selectedCategory,
         ...newEntry
       });
     }
 
-    if (!entry) {
-      showToast('Nie udało się zapisać wpisu', 'error');
-      return;
+    if (entry) {
+      // Sprawdź czy produkt istnieje, jeśli nie - utwórz
+      if (newEntry.product_name) {
+        let shouldCreateProduct = false;
+
+        if (newEntry.barcode) {
+          const existingProduct = await productService.getByBarcode(newEntry.barcode);
+          if (!existingProduct) {
+            shouldCreateProduct = true;
+          }
+        } else {
+          shouldCreateProduct = true;
+        }
+
+        if (shouldCreateProduct) {
+          await productService.create({
+            name: newEntry.product_name,
+            barcode: newEntry.barcode || undefined,
+            pku_w: newEntry.pku_w || undefined,
+            unit: newEntry.unit,
+            net_price: newEntry.net_price,
+            category_id: selectedCategory
+          });
+        }
+      }
+
+      setShowAddModal(false);
+      setEditingEntry(null);
+      setNewEntry({
+        pku_w: '',
+        product_name: '',
+        unit: 'szt',
+        quantity: 0,
+        net_price: 0,
+        invoice_number: '',
+        barcode: '',
+        notes: ''
+      });
+      await loadEntries();
     }
-
-    await productService.createOrUpdate({
-      name: newEntry.product_name,
-      barcode: newEntry.barcode || undefined,
-      unit: newEntry.unit,
-      net_price: newEntry.net_price,
-      category_id: categoryToUse,
-      pku_w: newEntry.pku_w || undefined,
-      invoice_number: newEntry.invoice_number || undefined,
-      notes: newEntry.notes || undefined
-    });
-
-    showToast('Produkt dodany do inwentaryzacji i zapisany w bazie produktów', 'success');
-    setShowAddModal(false);
-    resetEntryForm();
-    await loadEntries();
   };
 
   const handleDeleteEntry = async (id: string) => {
-    const confirmed = await showConfirm({
-      title: 'Usuń wpis',
-      message: 'Czy na pewno chcesz usunąć ten wpis?',
-      confirmText: 'Usuń',
-      type: 'danger'
-    });
-    if (confirmed) {
+    if (confirm('Czy na pewno chcesz usunąć ten wpis?')) {
       const success = await entryService.deletePreliminaryEntry(id);
       if (success) {
         await loadEntries();
@@ -277,10 +224,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
             <span>OCR</span>
           </button>
           <button
-            onClick={() => {
-              resetEntryForm();
-              setShowAddModal(true);
-            }}
+            onClick={() => setShowAddModal(true)}
             className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
           >
             <Plus className="h-4 w-4" />
@@ -422,34 +366,11 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       {/* Modal dodawania produktu */}
       <Modal
         isOpen={showAddModal}
-        onClose={() => {
-          setShowAddModal(false);
-          resetEntryForm();
-        }}
+        onClose={() => setShowAddModal(false)}
         title={editingEntry ? "Edytuj wpis w inwentaryzacji" : "Dodaj produkt do inwentaryzacji"}
         size="lg"
       >
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Kategoria produktu *
-            </label>
-            <select
-              value={newEntry.category_id || selectedCategory}
-              onChange={(e) => setNewEntry({...newEntry, category_id: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-gray-500">
-              Produkt zostanie dodany do widoku "Produkty" w tej kategorii
-            </p>
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               PKU i W (opcjonalne)
@@ -479,10 +400,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
             />
             
             {productSuggestions.length > 0 && (
-              <div
-                className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
-                onScroll={handleSuggestionScroll}
-              >
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto">
                 {productSuggestions.map((product) => (
                   <button
                     key={product.id}
@@ -496,11 +414,6 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
                     </div>
                   </button>
                 ))}
-                {loadingMoreSuggestions && (
-                  <div className="px-3 py-2 text-center text-sm text-gray-500">
-                    Ładowanie...
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -606,17 +519,14 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
           <div className="flex justify-end space-x-3 pt-4">
             <button
-              onClick={() => {
-                setShowAddModal(false);
-                resetEntryForm();
-              }}
+              onClick={() => setShowAddModal(false)}
               className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
             >
               Anuluj
             </button>
             <button
               onClick={handleSubmitEntry}
-              disabled={!newEntry.product_name || (!newEntry.category_id && !selectedCategory)}
+              disabled={!newEntry.product_name}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {editingEntry ? "Zapisz zmiany" : "Dodaj do inwentaryzacji"}
@@ -660,7 +570,7 @@ function OCRComponent({ onResult }: { onResult: (result: any) => void }) {
     if (result) {
       onResult(result);
     } else {
-      showToast('Błąd podczas przetwarzania dokumentu', 'error');
+      alert('Błąd podczas przetwarzania dokumentu');
     }
   };
 

@@ -4,17 +4,11 @@ import InventoryList from './components/InventoryList';
 import ProductManagement from './components/ProductManagement';
 import PreliminaryInventory from './components/PreliminaryInventory';
 import FinalInventory from './components/FinalInventory';
-import UserManagement from './components/UserManagement';
-import { Auth } from './components/Auth';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { NotificationProvider } from './contexts/NotificationContext';
 import { isSupabaseConfigured } from './lib/supabase';
-import { LoadingSpinner } from './components/ui/LoadingSpinner';
 
-function AppContent() {
+function App() {
   const [currentPage, setCurrentPage] = useState('inventories');
   const [currentInventoryId, setCurrentInventoryId] = useState<string | null>(null);
-  const { user, loading } = useAuth();
 
   const handleNavigate = (page: string, inventoryId?: string) => {
     setCurrentPage(page);
@@ -22,18 +16,6 @@ function AppContent() {
       setCurrentInventoryId(inventoryId);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Auth />;
-  }
 
   const renderCurrentPage = () => {
     switch (currentPage) {
@@ -60,9 +42,9 @@ function AppContent() {
         );
       case 'final':
         return currentInventoryId ? (
-          <FinalInventory 
-            inventoryId={currentInventoryId} 
-            onNavigate={handleNavigate} 
+          <FinalInventory
+            inventoryId={currentInventoryId}
+            onNavigate={handleNavigate}
           />
         ) : (
           <div className="text-center py-12">
@@ -75,8 +57,6 @@ function AppContent() {
             </button>
           </div>
         );
-      case 'users':
-        return <UserManagement />;
       default:
         return <InventoryList onNavigate={handleNavigate} />;
     }
@@ -106,16 +86,6 @@ VITE_SUPABASE_ANON_KEY=twój_supabase_anon_key
       )}
       {renderCurrentPage()}
     </Layout>
-  );
-}
-
-function App() {
-  return (
-    <AuthProvider>
-      <NotificationProvider>
-        <AppContent />
-      </NotificationProvider>
-    </AuthProvider>
   );
 }
 

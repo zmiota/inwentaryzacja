@@ -5,14 +5,12 @@ import { inventoryService } from '../services/inventoryService';
 import LoadingSpinner from './ui/LoadingSpinner';
 import Modal from './ui/Modal';
 import { isSupabaseConfigured } from '../lib/supabase';
-import { useNotification } from '../contexts/NotificationContext';
 
 interface InventoryListProps {
   onNavigate: (page: string, inventoryId?: string) => void;
 }
 
 export default function InventoryList({ onNavigate }: InventoryListProps) {
-  const { showToast, showConfirm } = useNotification();
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -34,7 +32,7 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
 
   const handleCreateInventory = async () => {
     if (!isSupabaseConfigured) {
-      showToast('Supabase nie jest skonfigurowany. Dodaj zmienne VITE_SUPABASE_URL i VITE_SUPABASE_ANON_KEY do pliku .env', 'error');
+      alert('Supabase nie jest skonfigurowany. Dodaj zmienne VITE_SUPABASE_URL i VITE_SUPABASE_ANON_KEY do pliku .env');
       return;
     }
     
@@ -53,22 +51,16 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
 
   const handleDeleteInventory = async (id: string, name: string) => {
     if (!isSupabaseConfigured) {
-      showToast('Supabase nie jest skonfigurowany.', 'error');
+      alert('Supabase nie jest skonfigurowany.');
       return;
     }
 
-    const confirmed = await showConfirm({
-      title: 'Usuń inwentaryzację',
-      message: `Czy na pewno chcesz usunąć inwentaryzację "${name}"?\n\nTo działanie usunie również wszystkie powiązane dane (wpisy wstępne, końcowe, członków komisji) i nie może być cofnięte.`,
-      confirmText: 'Usuń',
-      type: 'danger'
-    });
-    if (confirmed) {
+    if (confirm(`Czy na pewno chcesz usunąć inwentaryzację "${name}"?\n\nTo działanie usunie również wszystkie powiązane dane (wpisy wstępne, końcowe, członków komisji) i nie może być cofnięte.`)) {
       const success = await inventoryService.delete(id);
       if (success) {
         await loadInventories();
       } else {
-        showToast('Wystąpił błąd podczas usuwania inwentaryzacji.', 'error');
+        alert('Wystąpił błąd podczas usuwania inwentaryzacji.');
       }
     }
   };
@@ -121,7 +113,7 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
                   Nazwa
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Jednostka
+                  Sposób prowadzenia
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
@@ -139,11 +131,9 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
                 <tr key={inventory.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{inventory.name}</div>
-                    <div className="text-sm text-gray-500">{inventory.inventory_method}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{inventory.unit_name}</div>
-                    <div className="text-sm text-gray-500">{inventory.unit_address}</div>
+                    <div className="text-sm text-gray-900">{inventory.inventory_method}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(inventory.status)}`}>
@@ -224,7 +214,7 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sposób przeprowadzenia inwentaryzacji *
+              Sposób przeprowadzenia inwentaryzacji
             </label>
             <select
               value={newInventory.inventory_method}

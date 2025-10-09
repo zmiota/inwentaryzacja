@@ -643,7 +643,7 @@ function FinalInventoryRow({
   return (
     <tr className="hover:bg-gray-50 transition-colors">
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-        {entry.row_number}
+        {entry.sequence_number}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
         {entry.pku_w || '-'}

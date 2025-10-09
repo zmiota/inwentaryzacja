@@ -156,18 +156,19 @@ export const exportService = {
         },
       });
 
-      // Sekcja podpisów pod tabelą
+      // Pobierz informacje o zakończeniu tabeli
       const finalY = (doc as any).lastAutoTable.finalY || tableStartY;
-      const currentPageNumber = doc.getCurrentPageInfo().pageNumber;
+      const totalPages = doc.getNumberOfPages();
+
+      // Sprawdź, czy potrzebujemy dodać nową stronę z nagłówkiem i podpisami
       let currentY: number;
 
-      // Jeśli tabela zajęła więcej niż 1 stronę, ostatnia strona powinna mieć nagłówek
-      if (currentPageNumber > 1) {
-        // Dodaj nową stronę z nagłówkiem i podpisami
+      if (totalPages > 1) {
+        // Dla wielostronicowych dokumentów - dodaj nową stronę z nagłówkiem
         doc.addPage();
         currentY = drawHeader() + 5;
       } else {
-        // Wszystko na pierwszej stronie - podpisy bezpośrednio pod tabelą
+        // Dla jednostronicowych - podpisy bezpośrednio pod tabelą
         currentY = finalY + 10;
       }
 

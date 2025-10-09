@@ -160,15 +160,19 @@ export const exportService = {
       const finalY = (doc as any).lastAutoTable.finalY || tableStartY;
       const totalPages = doc.getNumberOfPages();
 
-      // Sprawdź, czy potrzebujemy dodać nową stronę z nagłówkiem i podpisami
+      // Sprawdź, czy na ostatniej stronie jest dość miejsca na podpisy
+      // Jeśli nie, dodaj nową stronę z nagłówkiem
+      const spaceNeeded = 60; // przestrzeń potrzebna na podpisy
+      const spaceAvailable = pageHeight - finalY;
+
       let currentY: number;
 
-      if (totalPages > 1) {
-        // Dla wielostronicowych dokumentów - dodaj nową stronę z nagłówkiem
+      if (spaceAvailable < spaceNeeded) {
+        // Za mało miejsca - dodaj nową stronę z nagłówkiem i podpisami
         doc.addPage();
         currentY = drawHeader() + 5;
       } else {
-        // Dla jednostronicowych - podpisy bezpośrednio pod tabelą
+        // Jest miejsce - podpisy bezpośrednio pod tabelą
         currentY = finalY + 10;
       }
 

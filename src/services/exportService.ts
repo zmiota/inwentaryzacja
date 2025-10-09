@@ -118,13 +118,12 @@ export const exportService = {
       const totalValue = entries.reduce((sum, entry) => sum + entry.net_value, 0);
       tableData.push(['', '', '', '', '', 'SUMA NETTO:', `${totalValue.toFixed(2)} zł`]);
 
-      let firstPage = true;
-
       autoTable(doc, {
         head: [['Lp', 'PKU i W', 'Nazwa produktu', 'J.m.', 'Ilość', 'Cena netto', 'Wartość netto']],
         body: tableData,
         startY: tableStartY,
-        margin: { top: 15, left: 10, right: 10 },
+        margin: { top: tableStartY, left: 10, right: 10, bottom: 15 },
+        showHead: 'everyPage',
         styles: {
           fontSize: 7,
           cellPadding: 1.5,
@@ -157,12 +156,10 @@ export const exportService = {
           }
         },
         didDrawPage: function (data) {
-          // Dodaj nagłówek na każdej nowej stronie poza pierwszą
-          if (!firstPage) {
-            const headerHeight = drawHeader();
-            data.settings.startY = headerHeight;
+          // Rysuj nagłówek dokumentu na każdej stronie
+          if (data.pageNumber > 1) {
+            drawHeader();
           }
-          firstPage = false;
         },
       });
 

@@ -4,6 +4,7 @@ import InventoryList from './components/InventoryList';
 import ProductManagement from './components/ProductManagement';
 import PreliminaryInventory from './components/PreliminaryInventory';
 import FinalInventory from './components/FinalInventory';
+import TestPDF from './components/TestPDF';
 import { isSupabaseConfigured } from './lib/supabase';
 
 function App() {
@@ -42,9 +43,9 @@ function App() {
         );
       case 'final':
         return currentInventoryId ? (
-          <FinalInventory
-            inventoryId={currentInventoryId}
-            onNavigate={handleNavigate}
+          <FinalInventory 
+            inventoryId={currentInventoryId} 
+            onNavigate={handleNavigate} 
           />
         ) : (
           <div className="text-center py-12">
@@ -56,6 +57,10 @@ function App() {
               Powróć do listy inwentaryzacji
             </button>
           </div>
+        );
+      case 'export':
+        return (
+          <TestPDF />
         );
       default:
         return <InventoryList onNavigate={handleNavigate} />;

@@ -9,7 +9,6 @@ export interface Product {
   id: string;
   name: string;
   barcode?: string;
-  pku_w?: string;
   unit: string;
   net_price?: number;
   category_id?: string;

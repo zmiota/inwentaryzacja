@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Download, RefreshCw, CreditCard as Edit, Trash2, Save, X } from 'lucide-react';
-import { FinalInventoryEntry, Inventory, Product } from '../types';
+import { ArrowLeft, Plus, Download, RefreshCw, Edit, Trash2, Save, X } from 'lucide-react';
+import { FinalInventoryEntry, Inventory } from '../types';
 import { entryService } from '../services/entryService';
 import { inventoryService } from '../services/inventoryService';
 import { exportService } from '../services/exportService';
-import { productService } from '../services/productService';
 import LoadingSpinner from './ui/LoadingSpinner';
 import Modal from './ui/Modal';
 
@@ -19,14 +18,12 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
   const [loading, setLoading] = useState(true);
   const [editingEntry, setEditingEntry] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [productSuggestions, setProductSuggestions] = useState<Product[]>([]);
   const [newEntry, setNewEntry] = useState({
     pku_w: '',
     product_name: '',
     unit: 'szt',
     quantity: 0,
-    net_price: 0,
-    barcode: ''
+    net_price: 0
   });
 
   useEffect(() => {
@@ -77,32 +74,10 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
         product_name: '',
         unit: 'szt',
         quantity: 0,
-        net_price: 0,
-        barcode: ''
+        net_price: 0
       });
       await loadData();
     }
-  };
-
-  const handleProductSearch = async (value: string) => {
-    if (value.length >= 2) {
-      const suggestions = await productService.search(value);
-      setProductSuggestions(suggestions);
-    } else {
-      setProductSuggestions([]);
-    }
-  };
-
-  const selectProductSuggestion = (product: Product) => {
-    setNewEntry({
-      ...newEntry,
-      pku_w: product.pku_w || '',
-      product_name: product.name,
-      unit: product.unit,
-      net_price: product.net_price || 0,
-      barcode: product.barcode || ''
-    });
-    setProductSuggestions([]);
   };
 
   const handleDeleteEntry = async (id: string) => {
@@ -302,39 +277,16 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
             </div>
           </div>
 
-          <div className="relative">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nazwa produktu lub kod kreskowy *
+              Nazwa produktu *
             </label>
             <input
               type="text"
               value={newEntry.product_name}
-              onChange={(e) => {
-                setNewEntry({...newEntry, product_name: e.target.value});
-                handleProductSearch(e.target.value);
-              }}
+              onChange={(e) => setNewEntry({...newEntry, product_name: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Wpisz nazwę produktu lub kod kreskowy..."
             />
-
-            {productSuggestions.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto">
-                {productSuggestions.map((product) => (
-                  <button
-                    key={product.id}
-                    onClick={() => selectProductSuggestion(product)}
-                    className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm"
-                  >
-                    <div className="font-medium">{product.name}</div>
-                    <div className="text-xs text-gray-500">
-                      {product.barcode && `${product.barcode} • `}
-                      {product.pku_w && `PKU: ${product.pku_w} • `}
-                      {product.unit} • {product.net_price?.toFixed(2) || '0.00'} zł
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

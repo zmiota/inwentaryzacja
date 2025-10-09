@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, CreditCard as Edit, Trash2, Search, Package, Barcode } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Package, Barcode } from 'lucide-react';
 import { Product, Category } from '../types';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
@@ -81,7 +81,7 @@ export default function ProductManagement() {
     setNewProduct({
       name: product.name,
       barcode: product.barcode || '',
-      pku_w: product.pku_w || '',
+      pku_w: '', // PKU nie jest jeszcze w bazie, więc domyślnie puste
       unit: product.unit,
       net_price: product.net_price || 0,
       category_id: product.category_id || ''
@@ -214,7 +214,8 @@ export default function ProductManagement() {
                     <div className="text-sm font-medium text-gray-900">{product.name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {product.pku_w || <span className="text-gray-400">-</span>}
+                    {/* PKU nie jest jeszcze w bazie danych, więc pokazujemy placeholder */}
+                    <span className="text-gray-400">-</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {product.barcode ? (

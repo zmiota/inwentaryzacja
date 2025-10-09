@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Camera, Search, Trash2, CreditCard as Edit, Barcode } from 'lucide-react';
+import { ArrowLeft, Plus, Camera, Search, Trash2, Edit, Barcode } from 'lucide-react';
 import { Category, InventoryEntry, Product } from '../types';
 import { categoryService } from '../services/categoryService';
 import { entryService } from '../services/entryService';
@@ -72,7 +72,6 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   const selectProductSuggestion = (product: Product) => {
     setNewEntry({
       ...newEntry,
-      pku_w: product.pku_w || '',
       product_name: product.name,
       unit: product.unit,
       net_price: product.net_price || 0,
@@ -83,12 +82,11 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
   const handleBarcodeInput = async (barcode: string) => {
     if (!barcode) return;
-
+    
     const product = await productService.getByBarcode(barcode);
     if (product) {
       setNewEntry({
         ...newEntry,
-        pku_w: product.pku_w || '',
         product_name: product.name,
         unit: product.unit,
         net_price: product.net_price || 0,
@@ -139,23 +137,12 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
     if (entry) {
       // Sprawdź czy produkt istnieje, jeśli nie - utwórz
-      if (newEntry.product_name) {
-        let shouldCreateProduct = false;
-
-        if (newEntry.barcode) {
-          const existingProduct = await productService.getByBarcode(newEntry.barcode);
-          if (!existingProduct) {
-            shouldCreateProduct = true;
-          }
-        } else {
-          shouldCreateProduct = true;
-        }
-
-        if (shouldCreateProduct) {
+      if (newEntry.barcode && newEntry.product_name) {
+        const existingProduct = await productService.getByBarcode(newEntry.barcode);
+        if (!existingProduct) {
           await productService.create({
             name: newEntry.product_name,
-            barcode: newEntry.barcode || undefined,
-            pku_w: newEntry.pku_w || undefined,
+            barcode: newEntry.barcode,
             unit: newEntry.unit,
             net_price: newEntry.net_price,
             category_id: selectedCategory

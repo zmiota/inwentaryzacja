@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, CreditCard as Edit, Trash2, FileText, Package } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Package } from 'lucide-react';
 import { Inventory } from '../types';
 import { inventoryService } from '../services/inventoryService';
 import LoadingSpinner from './ui/LoadingSpinner';
@@ -16,6 +16,8 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newInventory, setNewInventory] = useState({
     name: '',
+    unit_name: '',
+    unit_address: '',
     inventory_method: 'ciągły'
   });
 
@@ -44,7 +46,7 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
     
     if (inventory) {
       setShowCreateModal(false);
-      setNewInventory({ name: '', inventory_method: 'ciągły' });
+      setNewInventory({ name: '', unit_name: '', unit_address: '', inventory_method: 'ciągły' });
       await loadInventories();
     }
   };
@@ -113,7 +115,7 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
                   Nazwa
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Sposób prowadzenia
+                  Jednostka
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
@@ -131,9 +133,11 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
                 <tr key={inventory.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{inventory.name}</div>
+                    <div className="text-sm text-gray-500">{inventory.inventory_method}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{inventory.inventory_method}</div>
+                    <div className="text-sm text-gray-900">{inventory.unit_name}</div>
+                    <div className="text-sm text-gray-500">{inventory.unit_address}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(inventory.status)}`}>
@@ -209,6 +213,32 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
               onChange={(e) => setNewInventory({...newInventory, name: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="np. Inwentaryzacja magazynu 2025"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nazwa jednostki inwentaryzacyjnej
+            </label>
+            <input
+              type="text"
+              value={newInventory.unit_name}
+              onChange={(e) => setNewInventory({...newInventory, unit_name: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Nazwa firmy/jednostki"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Adres jednostki
+            </label>
+            <textarea
+              value={newInventory.unit_address}
+              onChange={(e) => setNewInventory({...newInventory, unit_address: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={3}
+              placeholder="Pełny adres jednostki"
             />
           </div>
 

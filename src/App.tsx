@@ -8,6 +8,7 @@ import UserManagement from './components/UserManagement';
 import { Auth } from './components/Auth';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { isSupabaseConfigured } from './lib/supabase';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
 
@@ -25,7 +26,7 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-gray-900 flex items-center justify-center">
         <LoadingSpinner />
       </div>
     );
@@ -43,16 +44,16 @@ function AppContent() {
         return <ProductManagement />;
       case 'preliminary':
         return currentInventoryId ? (
-          <PreliminaryInventory 
-            inventoryId={currentInventoryId} 
-            onNavigate={handleNavigate} 
+          <PreliminaryInventory
+            inventoryId={currentInventoryId}
+            onNavigate={handleNavigate}
           />
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-500">Wybierz inwentaryzację z listy</p>
+            <p className="text-gray-500 dark:text-gray-400">Wybierz inwentaryzację z listy</p>
             <button
               onClick={() => setCurrentPage('inventories')}
-              className="mt-4 text-blue-600 hover:text-blue-800"
+              className="mt-4 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
             >
               Powróć do listy inwentaryzacji
             </button>
@@ -60,16 +61,16 @@ function AppContent() {
         );
       case 'final':
         return currentInventoryId ? (
-          <FinalInventory 
-            inventoryId={currentInventoryId} 
-            onNavigate={handleNavigate} 
+          <FinalInventory
+            inventoryId={currentInventoryId}
+            onNavigate={handleNavigate}
           />
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-500">Wybierz inwentaryzację z listy</p>
+            <p className="text-gray-500 dark:text-gray-400">Wybierz inwentaryzację z listy</p>
             <button
               onClick={() => setCurrentPage('inventories')}
-              className="mt-4 text-blue-600 hover:text-blue-800"
+              className="mt-4 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
             >
               Powróć do listy inwentaryzacji
             </button>
@@ -85,17 +86,17 @@ function AppContent() {
   return (
     <Layout currentPage={currentPage} onNavigate={handleNavigate}>
       {!isSupabaseConfigured && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-md p-4 mb-6">
           <div className="flex">
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">
+              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
                 Konfiguracja Supabase
               </h3>
-              <div className="mt-2 text-sm text-yellow-700">
+              <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-400">
                 <p>
                   Aby aplikacja działała poprawnie, skonfiguruj Supabase tworząc plik <code>.env</code> z:
                 </p>
-                <pre className="mt-2 text-xs bg-yellow-100 p-2 rounded">
+                <pre className="mt-2 text-xs bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded">
 VITE_SUPABASE_URL=twój_supabase_url{'\n'}
 VITE_SUPABASE_ANON_KEY=twój_supabase_anon_key
                 </pre>
@@ -111,11 +112,13 @@ VITE_SUPABASE_ANON_KEY=twój_supabase_anon_key
 
 function App() {
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <AppContent />
-      </NotificationProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <AppContent />
+        </NotificationProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

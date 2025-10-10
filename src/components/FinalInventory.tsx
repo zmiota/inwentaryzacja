@@ -221,9 +221,9 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Inwentaryzacja końcowa</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Inwentaryzacja końcowa</h1>
             {inventory && (
-              <p className="text-sm text-gray-500">{inventory.name}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{inventory.name}</p>
             )}
           </div>
         </div>
@@ -260,45 +260,45 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
         </div>
       </div>
 
-      <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Tabela inwentaryzacji końcowej</h3>
+      <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Tabela inwentaryzacji końcowej</h3>
         </div>
         
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-16">
                   Lp
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-24">
                   PKU i W
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Nazwa produktu
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-32">
                   Kod kreskowy
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-20">
                   J.m.
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-24">
                   Ilość
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-28">
                   Cena netto
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-32">
                   Wartość netto
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-20">
                   Akcje
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {entries.map((entry) => (
                 <FinalInventoryRow
                   key={entry.id}
@@ -311,12 +311,12 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
                 />
               ))}
             </tbody>
-            <tfoot className="bg-gray-50">
+            <tfoot className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <td colSpan={7} className="px-6 py-3 text-sm font-medium text-gray-900 text-right">
+                <td colSpan={7} className="px-6 py-3 text-sm font-medium text-gray-900 dark:text-white text-right">
                   SUMA WARTOŚCI NETTO:
                 </td>
-                <td className="px-6 py-3 text-sm font-bold text-gray-900">
+                <td className="px-6 py-3 text-sm font-bold text-gray-900 dark:text-white">
                   {totalValue.toFixed(2)} zł
                 </td>
                 <td></td>
@@ -562,8 +562,8 @@ function FinalInventoryRow({
 
   if (isEditing) {
     return (
-      <tr className="bg-blue-50">
-        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+      <tr className="bg-blue-50 dark:bg-blue-900/30">
+        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
           {entry.sequence_number}
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
@@ -571,7 +571,7 @@ function FinalInventoryRow({
             type="text"
             value={editData.pku_w}
             onChange={(e) => setEditData({...editData, pku_w: e.target.value})}
-            className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+            className="w-full px-2 py-1 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white"
           />
         </td>
         <td className="px-6 py-4">
@@ -579,14 +579,14 @@ function FinalInventoryRow({
             type="text"
             value={editData.product_name}
             onChange={(e) => setEditData({...editData, product_name: e.target.value})}
-            className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+            className="w-full px-2 py-1 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white"
           />
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
           <select
             value={editData.unit}
             onChange={(e) => setEditData({...editData, unit: e.target.value})}
-            className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+            className="w-full px-2 py-1 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white"
           >
             <option value="szt">szt</option>
             <option value="kg">kg</option>
@@ -605,7 +605,7 @@ function FinalInventoryRow({
             step="0.001"
             value={editData.quantity}
             onChange={(e) => setEditData({...editData, quantity: parseFloat(e.target.value) || 0})}
-            className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+            className="w-full px-2 py-1 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white"
           />
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
@@ -614,23 +614,23 @@ function FinalInventoryRow({
             step="0.01"
             value={editData.net_price}
             onChange={(e) => setEditData({...editData, net_price: parseFloat(e.target.value) || 0})}
-            className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+            className="w-full px-2 py-1 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white"
           />
         </td>
-        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
           {(editData.quantity * editData.net_price).toFixed(2)} zł
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
           <div className="flex justify-end space-x-1">
             <button
               onClick={() => onSave(editData)}
-              className="text-green-600 hover:text-green-900 p-1 rounded transition-colors"
+              className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 p-1 rounded transition-colors"
             >
               <Save className="h-4 w-4" />
             </button>
             <button
               onClick={onCancel}
-              className="text-gray-600 hover:text-gray-900 p-1 rounded transition-colors"
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 p-1 rounded transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -641,52 +641,52 @@ function FinalInventoryRow({
   }
 
   return (
-    <tr className="hover:bg-gray-50 transition-colors">
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
         {entry.sequence_number}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
         {entry.pku_w || '-'}
       </td>
       <td className="px-6 py-4">
-        <div className="text-sm font-medium text-gray-900">{entry.product_name}</div>
+        <div className="text-sm font-medium text-gray-900 dark:text-white">{entry.product_name}</div>
         {entry.notes && (
-          <div className="text-xs text-gray-500 mt-1">{entry.notes}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{entry.notes}</div>
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         {entry.barcode ? (
-          <div className="flex items-center space-x-1 text-sm text-gray-900">
+          <div className="flex items-center space-x-1 text-sm text-gray-900 dark:text-gray-300">
             <Barcode className="h-3 w-3" />
             <span>{entry.barcode}</span>
           </div>
         ) : (
-          <span className="text-gray-400">-</span>
+          <span className="text-gray-400 dark:text-gray-500">-</span>
         )}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
         {entry.unit}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
         {entry.quantity.toLocaleString('pl-PL')}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
         {entry.net_price.toFixed(2)} zł
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
         {entry.net_value.toFixed(2)} zł
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
         <div className="flex justify-end space-x-1">
           <button
             onClick={onEdit}
-            className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
           >
             <Edit className="h-4 w-4" />
           </button>
           <button
             onClick={onDelete}
-            className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
+            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           >
             <Trash2 className="h-4 w-4" />
           </button>

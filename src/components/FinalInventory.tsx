@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Download, RefreshCw, Edit, Trash2, Save, X } from 'lucide-react';
-import { FinalInventoryEntry, Inventory } from '../types';
+import { ArrowLeft, Plus, Download, RefreshCw, CreditCard as Edit, Trash2, Save, X, Barcode } from 'lucide-react';
+import { FinalInventoryEntry, Inventory, Category, Product } from '../types';
 import { entryService } from '../services/entryService';
+import { categoryService } from '../services/categoryService';
+import { productService } from '../services/productService';
 import { inventoryService } from '../services/inventoryService';
 import { exportService } from '../services/exportService';
 import LoadingSpinner from './ui/LoadingSpinner';
 import Modal from './ui/Modal';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface FinalInventoryProps {
   inventoryId: string;
@@ -13,8 +16,10 @@ interface FinalInventoryProps {
 }
 
 export default function FinalInventory({ inventoryId, onNavigate }: FinalInventoryProps) {
+  const { showConfirm, showToast } = useNotification();
   const [entries, setEntries] = useState<FinalInventoryEntry[]>([]);
   const [inventory, setInventory] = useState<Inventory | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingEntry, setEditingEntry] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -23,8 +28,16 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
     product_name: '',
     unit: 'szt',
     quantity: 0,
-    net_price: 0
+    net_price: 0,
+    barcode: '',
+    invoice_number: '',
+    notes: '',
+    category_id: ''
   });
+  const [productSuggestions, setProductSuggestions] = useState<Product[]>([]);
+  const [suggestionOffset, setSuggestionOffset] = useState(0);
+  const [hasMoreSuggestions, setHasMoreSuggestions] = useState(true);
+  const [loadingMoreSuggestions, setLoadingMoreSuggestions] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -32,17 +45,25 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
 
   const loadData = async () => {
     setLoading(true);
-    const [entriesData, inventoryData] = await Promise.all([
+    const [entriesData, inventoryData, categoriesData] = await Promise.all([
       entryService.getFinalEntries(inventoryId),
-      inventoryService.getById(inventoryId)
+      inventoryService.getById(inventoryId),
+      categoryService.getAll()
     ]);
     setEntries(entriesData);
     setInventory(inventoryData);
+    setCategories(categoriesData);
     setLoading(false);
   };
 
   const handleGenerateFromPreliminary = async () => {
-    if (confirm('To zaimportuje wszystkie dane z inwentaryzacji wstępnej i zastąpi obecne dane końcowe. Kontynuować?')) {
+    const confirmed = await showConfirm({
+      title: 'Zaciągnij dane z inwentaryzacji wstępnej',
+      message: 'To zaimportuje wszystkie dane z inwentaryzacji wstępnej i zastąpi obecne dane końcowe. Kontynuować?',
+      confirmText: 'Tak, zaimportuj',
+      type: 'warning'
+    });
+    if (confirmed) {
       const success = await entryService.generateFinalFromPreliminary(inventoryId);
       if (success) {
         await loadData();
@@ -59,8 +80,10 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
   };
 
   const handleAddEntry = async () => {
+    if (!newEntry.product_name || !newEntry.category_id) return;
+
     const maxSequenceNumber = Math.max(...entries.map(e => e.sequence_number), 0);
-    
+
     const entry = await entryService.createFinalEntry({
       inventory_id: inventoryId,
       sequence_number: maxSequenceNumber + 1,
@@ -68,20 +91,45 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
     });
 
     if (entry) {
+      await productService.createOrUpdate({
+        name: newEntry.product_name,
+        barcode: newEntry.barcode || undefined,
+        unit: newEntry.unit,
+        net_price: newEntry.net_price,
+        category_id: newEntry.category_id,
+        pku_w: newEntry.pku_w || undefined,
+        invoice_number: newEntry.invoice_number || undefined,
+        notes: newEntry.notes || undefined
+      });
+
+      showToast('Produkt dodany do inwentaryzacji i zapisany w bazie produktów', 'success');
       setShowAddModal(false);
       setNewEntry({
         pku_w: '',
         product_name: '',
         unit: 'szt',
         quantity: 0,
-        net_price: 0
+        net_price: 0,
+        barcode: '',
+        invoice_number: '',
+        notes: '',
+        category_id: ''
       });
+      setProductSuggestions([]);
+      setSuggestionOffset(0);
+      setHasMoreSuggestions(true);
       await loadData();
     }
   };
 
   const handleDeleteEntry = async (id: string) => {
-    if (confirm('Czy na pewno chcesz usunąć ten wpis?')) {
+    const confirmed = await showConfirm({
+      title: 'Usuń wpis',
+      message: 'Czy na pewno chcesz usunąć ten wpis?',
+      confirmText: 'Usuń',
+      type: 'danger'
+    });
+    if (confirmed) {
       const success = await entryService.deleteFinalEntry(id);
       if (success) {
         await loadData();
@@ -98,6 +146,57 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
   const handleExportExcel = async () => {
     if (inventory) {
       await exportService.exportToExcel(inventory, entries);
+    }
+  };
+
+  const handleProductNameChange = async (value: string) => {
+    setNewEntry({...newEntry, product_name: value});
+
+    if (value.length >= 2) {
+      setSuggestionOffset(0);
+      setHasMoreSuggestions(true);
+      const suggestions = await productService.search(value, undefined, 50, 0);
+      setProductSuggestions(suggestions);
+      setHasMoreSuggestions(suggestions.length === 50);
+    } else {
+      setProductSuggestions([]);
+      setSuggestionOffset(0);
+      setHasMoreSuggestions(true);
+    }
+  };
+
+  const selectProductSuggestion = (product: Product) => {
+    setNewEntry({
+      ...newEntry,
+      product_name: product.name,
+      unit: product.unit,
+      net_price: product.net_price || 0,
+      barcode: product.barcode || '',
+      pku_w: product.pku_w || '',
+      category_id: product.category_id || newEntry.category_id
+    });
+    setProductSuggestions([]);
+  };
+
+  const loadMoreSuggestions = async () => {
+    if (!hasMoreSuggestions || loadingMoreSuggestions) return;
+
+    setLoadingMoreSuggestions(true);
+    const newOffset = suggestionOffset + 50;
+    const moreSuggestions = await productService.search(newEntry.product_name, undefined, 50, newOffset);
+
+    setProductSuggestions(prev => [...prev, ...moreSuggestions]);
+    setSuggestionOffset(newOffset);
+    setHasMoreSuggestions(moreSuggestions.length === 50);
+    setLoadingMoreSuggestions(false);
+  };
+
+  const handleSuggestionScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
+
+    if (bottom && hasMoreSuggestions && !loadingMoreSuggestions) {
+      loadMoreSuggestions();
     }
   };
 
@@ -179,6 +278,9 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Nazwa produktu
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                  Kod kreskowy
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                   J.m.
                 </th>
@@ -211,7 +313,7 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
             </tbody>
             <tfoot className="bg-gray-50">
               <tr>
-                <td colSpan={6} className="px-6 py-3 text-sm font-medium text-gray-900 text-right">
+                <td colSpan={7} className="px-6 py-3 text-sm font-medium text-gray-900 text-right">
                   SUMA WARTOŚCI NETTO:
                 </td>
                 <td className="px-6 py-3 text-sm font-bold text-gray-900">
@@ -242,19 +344,80 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
         size="lg"
       >
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                PKU i W (opcjonalne)
-              </label>
-              <input
-                type="text"
-                value={newEntry.pku_w}
-                onChange={(e) => setNewEntry({...newEntry, pku_w: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Kategoria produktu *
+            </label>
+            <select
+              value={newEntry.category_id}
+              onChange={(e) => setNewEntry({...newEntry, category_id: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Wybierz kategorię...</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              Produkt zostanie dodany do widoku "Produkty" w tej kategorii
+            </p>
+          </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              PKU i W (opcjonalne)
+            </label>
+            <input
+              type="text"
+              value={newEntry.pku_w}
+              onChange={(e) => setNewEntry({...newEntry, pku_w: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Kod PKU i W"
+            />
+          </div>
+
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nazwa produktu *
+            </label>
+            <input
+              type="text"
+              value={newEntry.product_name}
+              onChange={(e) => handleProductNameChange(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Wpisz nazwę produktu..."
+            />
+
+            {productSuggestions.length > 0 && (
+              <div
+                className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                onScroll={handleSuggestionScroll}
+              >
+                {productSuggestions.map((product) => (
+                  <button
+                    key={product.id}
+                    onClick={() => selectProductSuggestion(product)}
+                    className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm"
+                  >
+                    <div className="font-medium">{product.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {product.barcode && `${product.barcode} • `}
+                      {product.unit} • {product.net_price?.toFixed(2) || '0.00'} zł
+                    </div>
+                  </button>
+                ))}
+                {loadingMoreSuggestions && (
+                  <div className="px-3 py-2 text-center text-sm text-gray-500">
+                    Ładowanie...
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Jednostka miary
@@ -275,18 +438,19 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
                 <option value="opak">opak</option>
               </select>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nazwa produktu *
-            </label>
-            <input
-              type="text"
-              value={newEntry.product_name}
-              onChange={(e) => setNewEntry({...newEntry, product_name: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Kod kreskowy
+              </label>
+              <input
+                type="text"
+                value={newEntry.barcode}
+                onChange={(e) => setNewEntry({...newEntry, barcode: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Kod kreskowy produktu"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -315,6 +479,31 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Numer faktury/inwentu
+            </label>
+            <input
+              type="text"
+              value={newEntry.invoice_number}
+              onChange={(e) => setNewEntry({...newEntry, invoice_number: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="np. FV/2025/001"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Uwagi
+            </label>
+            <textarea
+              value={newEntry.notes}
+              onChange={(e) => setNewEntry({...newEntry, notes: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={2}
+            />
           </div>
 
           <div className="bg-gray-50 p-3 rounded-md">
@@ -365,7 +554,10 @@ function FinalInventoryRow({
     product_name: entry.product_name,
     unit: entry.unit,
     quantity: entry.quantity,
-    net_price: entry.net_price
+    net_price: entry.net_price,
+    barcode: entry.barcode || '',
+    invoice_number: entry.invoice_number || '',
+    notes: entry.notes || ''
   });
 
   if (isEditing) {
@@ -451,13 +643,26 @@ function FinalInventoryRow({
   return (
     <tr className="hover:bg-gray-50 transition-colors">
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-        {entry.row_number}
+        {entry.sequence_number}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
         {entry.pku_w || '-'}
       </td>
       <td className="px-6 py-4">
         <div className="text-sm font-medium text-gray-900">{entry.product_name}</div>
+        {entry.notes && (
+          <div className="text-xs text-gray-500 mt-1">{entry.notes}</div>
+        )}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        {entry.barcode ? (
+          <div className="flex items-center space-x-1 text-sm text-gray-900">
+            <Barcode className="h-3 w-3" />
+            <span>{entry.barcode}</span>
+          </div>
+        ) : (
+          <span className="text-gray-400">-</span>
+        )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
         {entry.unit}

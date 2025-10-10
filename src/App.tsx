@@ -4,12 +4,17 @@ import InventoryList from './components/InventoryList';
 import ProductManagement from './components/ProductManagement';
 import PreliminaryInventory from './components/PreliminaryInventory';
 import FinalInventory from './components/FinalInventory';
-import TestPDF from './components/TestPDF';
+import UserManagement from './components/UserManagement';
+import { Auth } from './components/Auth';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { isSupabaseConfigured } from './lib/supabase';
+import { LoadingSpinner } from './components/ui/LoadingSpinner';
 
-function App() {
+function AppContent() {
   const [currentPage, setCurrentPage] = useState('inventories');
   const [currentInventoryId, setCurrentInventoryId] = useState<string | null>(null);
+  const { user, loading } = useAuth();
 
   const handleNavigate = (page: string, inventoryId?: string) => {
     setCurrentPage(page);
@@ -17,6 +22,18 @@ function App() {
       setCurrentInventoryId(inventoryId);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Auth />;
+  }
 
   const renderCurrentPage = () => {
     switch (currentPage) {
@@ -58,10 +75,8 @@ function App() {
             </button>
           </div>
         );
-      case 'export':
-        return (
-          <TestPDF />
-        );
+      case 'users':
+        return <UserManagement />;
       default:
         return <InventoryList onNavigate={handleNavigate} />;
     }
@@ -91,6 +106,16 @@ VITE_SUPABASE_ANON_KEY=twój_supabase_anon_key
       )}
       {renderCurrentPage()}
     </Layout>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <NotificationProvider>
+        <AppContent />
+      </NotificationProvider>
+    </AuthProvider>
   );
 }
 

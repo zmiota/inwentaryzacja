@@ -1,23 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Edit, Trash2, FileText, Package } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, FileText, Package } from 'lucide-react';
 import { Inventory } from '../types';
 import { inventoryService } from '../services/inventoryService';
 import LoadingSpinner from './ui/LoadingSpinner';
 import Modal from './ui/Modal';
 import { isSupabaseConfigured } from '../lib/supabase';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface InventoryListProps {
   onNavigate: (page: string, inventoryId?: string) => void;
 }
 
 export default function InventoryList({ onNavigate }: InventoryListProps) {
+  const { showToast, showConfirm } = useNotification();
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newInventory, setNewInventory] = useState({
     name: '',
-    unit_name: '',
-    unit_address: '',
     inventory_method: 'ciągły'
   });
 
@@ -34,7 +34,7 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
 
   const handleCreateInventory = async () => {
     if (!isSupabaseConfigured) {
-      alert('Supabase nie jest skonfigurowany. Dodaj zmienne VITE_SUPABASE_URL i VITE_SUPABASE_ANON_KEY do pliku .env');
+      showToast('Supabase nie jest skonfigurowany. Dodaj zmienne VITE_SUPABASE_URL i VITE_SUPABASE_ANON_KEY do pliku .env', 'error');
       return;
     }
     
@@ -46,23 +46,29 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
     
     if (inventory) {
       setShowCreateModal(false);
-      setNewInventory({ name: '', unit_name: '', unit_address: '', inventory_method: 'ciągły' });
+      setNewInventory({ name: '', inventory_method: 'ciągły' });
       await loadInventories();
     }
   };
 
   const handleDeleteInventory = async (id: string, name: string) => {
     if (!isSupabaseConfigured) {
-      alert('Supabase nie jest skonfigurowany.');
+      showToast('Supabase nie jest skonfigurowany.', 'error');
       return;
     }
 
-    if (confirm(`Czy na pewno chcesz usunąć inwentaryzację "${name}"?\n\nTo działanie usunie również wszystkie powiązane dane (wpisy wstępne, końcowe, członków komisji) i nie może być cofnięte.`)) {
+    const confirmed = await showConfirm({
+      title: 'Usuń inwentaryzację',
+      message: `Czy na pewno chcesz usunąć inwentaryzację "${name}"?\n\nTo działanie usunie również wszystkie powiązane dane (wpisy wstępne, końcowe, członków komisji) i nie może być cofnięte.`,
+      confirmText: 'Usuń',
+      type: 'danger'
+    });
+    if (confirmed) {
       const success = await inventoryService.delete(id);
       if (success) {
         await loadInventories();
       } else {
-        alert('Wystąpił błąd podczas usuwania inwentaryzacji.');
+        showToast('Wystąpił błąd podczas usuwania inwentaryzacji.', 'error');
       }
     }
   };
@@ -218,33 +224,7 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nazwa jednostki inwentaryzacyjnej
-            </label>
-            <input
-              type="text"
-              value={newInventory.unit_name}
-              onChange={(e) => setNewInventory({...newInventory, unit_name: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Nazwa firmy/jednostki"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Adres jednostki
-            </label>
-            <textarea
-              value={newInventory.unit_address}
-              onChange={(e) => setNewInventory({...newInventory, unit_address: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              rows={3}
-              placeholder="Pełny adres jednostki"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sposób przeprowadzenia inwentaryzacji
+              Sposób przeprowadzenia inwentaryzacji *
             </label>
             <select
               value={newInventory.inventory_method}

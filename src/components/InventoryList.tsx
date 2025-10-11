@@ -16,6 +16,7 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [newInventory, setNewInventory] = useState({
     name: '',
     inventory_method: 'ciągły'
@@ -33,21 +34,29 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
   };
 
   const handleCreateInventory = async () => {
+    if (isCreating) return;
+
     if (!isSupabaseConfigured) {
       showToast('Supabase nie jest skonfigurowany. Dodaj zmienne VITE_SUPABASE_URL i VITE_SUPABASE_ANON_KEY do pliku .env', 'error');
       return;
     }
-    
-    const inventory = await inventoryService.create({
-      ...newInventory,
-      type: 'preliminary',
-      status: 'active'
-    });
-    
-    if (inventory) {
-      setShowCreateModal(false);
-      setNewInventory({ name: '', inventory_method: 'ciągły' });
-      await loadInventories();
+
+    setIsCreating(true);
+
+    try {
+      const inventory = await inventoryService.create({
+        ...newInventory,
+        type: 'preliminary',
+        status: 'active'
+      });
+
+      if (inventory) {
+        setShowCreateModal(false);
+        setNewInventory({ name: '', inventory_method: 'ciągły' });
+        await loadInventories();
+      }
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -210,26 +219,28 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nazwa inwentaryzacji *
             </label>
             <input
               type="text"
               value={newInventory.name}
               onChange={(e) => setNewInventory({...newInventory, name: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
               placeholder="np. Inwentaryzacja magazynu 2025"
+              disabled={isCreating}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Sposób przeprowadzenia inwentaryzacji *
             </label>
             <select
               value={newInventory.inventory_method}
               onChange={(e) => setNewInventory({...newInventory, inventory_method: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
+              disabled={isCreating}
             >
               <option value="ciągły">Ciągły</option>
               <option value="okresowy">Okresowy</option>
@@ -246,10 +257,10 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
             </button>
             <button
               onClick={handleCreateInventory}
-              disabled={!newInventory.name}
+              disabled={!newInventory.name || isCreating}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Utwórz
+              {isCreating ? 'Tworzenie...' : 'Utwórz'}
             </button>
           </div>
         </div>

@@ -62,9 +62,9 @@ uniwersalny`;
         const leftColumnX = margin;
         doc.text('Skład komisji inwentaryzacyjnej:', leftColumnX, currentY);
         currentY += 5;
-        doc.text('Przewodniczący: .................................................', leftColumnX, currentY);
+        doc.text('Przewodniczący: Izabela Pawłowska', leftColumnX, currentY);
         currentY += 4;
-        doc.text('Członek 1: .................................................', leftColumnX, currentY);
+        doc.text('Członek 1: Paweł Pawłowski', leftColumnX, currentY);
         currentY += 4;
         doc.text('Członek 2: .................................................', leftColumnX, currentY);
         currentY += 6;
@@ -183,7 +183,7 @@ uniwersalny`;
 
       doc.text('Wycenił:', leftColumnX, currentY);
       currentY += 4;
-      doc.text('Imię i nazwisko: ....................................................', leftColumnX + 2, currentY);
+      doc.text('Imię i nazwisko: Izabela Pawłowska', leftColumnX + 2, currentY);
       currentY += 5;
       doc.text('Podpis: ....................................................', leftColumnX + 2, currentY);
 
@@ -207,11 +207,11 @@ uniwersalny`;
           signY += 6;
         });
       } else {
-        doc.text('Przewodniczący: ....................................', rightColumnX, signY);
+        doc.text('Przewodniczący: Izaebla Pawłowska', rightColumnX, signY);
         signY += 4;
         doc.text('Podpis: ....................................', rightColumnX + 2, signY);
         signY += 6;
-        doc.text('Członek: ....................................', rightColumnX, signY);
+        doc.text('Członek: Paweł Pawłowski', rightColumnX, signY);
         signY += 4;
         doc.text('Podpis: ....................................', rightColumnX + 2, signY);
       }

@@ -431,13 +431,13 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Kategoria produktu *
             </label>
             <select
               value={newEntry.category_id || selectedCategory}
               onChange={(e) => setNewEntry({...newEntry, category_id: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
             >
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
@@ -451,20 +451,20 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               PKU i W (opcjonalne)
             </label>
             <input
               type="text"
               value={newEntry.pku_w}
               onChange={(e) => setNewEntry({...newEntry, pku_w: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
               placeholder="Kod PKU i W"
             />
           </div>
 
           <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nazwa produktu *
             </label>
             <input
@@ -474,7 +474,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
                 setNewEntry({...newEntry, product_name: e.target.value});
                 handleBarcodeOrNameSearch(e.target.value);
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
               placeholder="Wpisz nazwę produktu lub kod kreskowy..."
             />
             
@@ -507,13 +507,13 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Jednostka miary
               </label>
               <select
                 value={newEntry.unit}
                 onChange={(e) => setNewEntry({...newEntry, unit: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
               >
                 <option value="szt">szt</option>
                 <option value="kg">kg</option>
@@ -528,7 +528,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Kod kreskowy
               </label>
               <input
@@ -539,7 +539,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
                   handleBarcodeInput(e.target.value);
                   handleBarcodeOrNameSearch(e.target.value);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
                 placeholder="Kod kreskowy produktu"
               />
             </div>
@@ -547,7 +547,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Ilość *
               </label>
               <input
@@ -555,12 +555,12 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
                 step="0.001"
                 value={newEntry.quantity}
                 onChange={(e) => setNewEntry({...newEntry, quantity: parseFloat(e.target.value) || 0})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Cena netto *
               </label>
               <input
@@ -568,32 +568,32 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
                 step="0.01"
                 value={newEntry.net_price}
                 onChange={(e) => setNewEntry({...newEntry, net_price: parseFloat(e.target.value) || 0})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Numer faktury/inwentu
             </label>
             <input
               type="text"
               value={newEntry.invoice_number}
               onChange={(e) => setNewEntry({...newEntry, invoice_number: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
               placeholder="np. FV/2025/001"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Uwagi
             </label>
             <textarea
               value={newEntry.notes}
               onChange={(e) => setNewEntry({...newEntry, notes: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
               rows={2}
             />
           </div>

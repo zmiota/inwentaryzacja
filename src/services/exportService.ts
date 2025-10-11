@@ -66,8 +66,7 @@ uniwersalny`;
         currentY += 4;
         doc.text('Członek 1: Paweł Pawłowski', leftColumnX, currentY);
         currentY += 4;
-        doc.text('Członek 2: .................................................', leftColumnX, currentY);
-        currentY += 6;
+     
 
         doc.text('Spis rozpoczęto:', leftColumnX, currentY);
         currentY += 4;

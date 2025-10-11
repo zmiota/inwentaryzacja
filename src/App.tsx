@@ -9,6 +9,7 @@ import { Auth } from './components/Auth';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { NetworkProvider } from './contexts/NetworkContext';
 import { isSupabaseConfigured } from './lib/supabase';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
 
@@ -113,11 +114,13 @@ VITE_SUPABASE_ANON_KEY=twój_supabase_anon_key
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <NotificationProvider>
-          <AppContent />
-        </NotificationProvider>
-      </AuthProvider>
+      <NetworkProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <AppContent />
+          </NotificationProvider>
+        </AuthProvider>
+      </NetworkProvider>
     </ThemeProvider>
   );
 }

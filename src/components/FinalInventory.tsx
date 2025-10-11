@@ -583,6 +583,15 @@ function FinalInventoryRow({
           />
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
+          <input
+            type="text"
+            value={editData.barcode}
+            onChange={(e) => setEditData({...editData, barcode: e.target.value})}
+            className="w-full px-2 py-1 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white"
+            placeholder="Kod kreskowy"
+          />
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
           <select
             value={editData.unit}
             onChange={(e) => setEditData({...editData, unit: e.target.value})}

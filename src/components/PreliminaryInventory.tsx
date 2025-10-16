@@ -396,12 +396,12 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
                 </tr>
               ))}
             </tbody>
-            <tfoot className="bg-gray-50">
+            <tfoot className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <td colSpan={5} className="px-6 py-3 text-sm font-medium text-gray-900 text-right">
+                <td colSpan={5} className="px-6 py-3 text-sm font-medium text-gray-900 dark:text-white text-right">
                   Suma wartości netto:
                 </td>
-                <td className="px-6 py-3 text-sm font-bold text-gray-900">
+                <td className="px-6 py-3 text-sm font-bold text-gray-900 dark:text-white">
                   {totalValue.toFixed(2)} zł
                 </td>
                 <td colSpan={2}></td>

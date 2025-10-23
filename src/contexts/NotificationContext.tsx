@@ -14,11 +14,12 @@ interface ConfirmOptions {
   confirmText?: string;
   cancelText?: string;
   type?: 'danger' | 'warning' | 'info';
+  requirePassword?: boolean;
 }
 
 interface NotificationContextType {
   showToast: (message: string, type?: ToastType) => void;
-  showConfirm: (options: ConfirmOptions) => Promise<boolean>;
+  showConfirm: (options: ConfirmOptions) => Promise<boolean | string>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -28,7 +29,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean;
     options: ConfirmOptions;
-    resolve: ((value: boolean) => void) | null;
+    resolve: ((value: boolean | string) => void) | null;
   }>({
     isOpen: false,
     options: { title: '', message: '' },
@@ -44,7 +45,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   }, []);
 
-  const showConfirm = useCallback((options: ConfirmOptions): Promise<boolean> => {
+  const showConfirm = useCallback((options: ConfirmOptions): Promise<boolean | string> => {
     return new Promise((resolve) => {
       setConfirmState({
         isOpen: true,
@@ -54,9 +55,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const handleConfirm = useCallback(() => {
+  const handleConfirm = useCallback((password?: string) => {
     if (confirmState.resolve) {
-      confirmState.resolve(true);
+      if (confirmState.options.requirePassword && password) {
+        confirmState.resolve(password);
+      } else {
+        confirmState.resolve(true);
+      }
     }
     setConfirmState({
       isOpen: false,
@@ -98,6 +103,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         confirmText={confirmState.options.confirmText}
         cancelText={confirmState.options.cancelText}
         type={confirmState.options.type}
+        requirePassword={confirmState.options.requirePassword}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
       />

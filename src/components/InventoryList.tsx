@@ -4,8 +4,9 @@ import { Inventory } from '../types';
 import { inventoryService } from '../services/inventoryService';
 import LoadingSpinner from './ui/LoadingSpinner';
 import Modal from './ui/Modal';
-import { isSupabaseConfigured } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { useNotification } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface InventoryListProps {
   onNavigate: (page: string, inventoryId?: string) => void;
@@ -13,6 +14,7 @@ interface InventoryListProps {
 
 export default function InventoryList({ onNavigate }: InventoryListProps) {
   const { showToast, showConfirm } = useNotification();
+  const { user } = useAuth();
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -66,15 +68,36 @@ export default function InventoryList({ onNavigate }: InventoryListProps) {
       return;
     }
 
-    const confirmed = await showConfirm({
+    if (!user) {
+      showToast('Musisz być zalogowany, aby usunąć inwentaryzację.', 'error');
+      return;
+    }
+
+    const result = await showConfirm({
       title: 'Usuń inwentaryzację',
       message: `Czy na pewno chcesz usunąć inwentaryzację "${name}"?\n\nTo działanie usunie również wszystkie powiązane dane (wpisy wstępne, końcowe, członków komisji) i nie może być cofnięte.`,
       confirmText: 'Usuń',
-      type: 'danger'
+      type: 'danger',
+      requirePassword: true
     });
-    if (confirmed) {
+
+    if (result && typeof result === 'string') {
+      // Weryfikacja hasła użytkownika
+      const { data: verifiedUser } = await supabase
+        .from('app_users')
+        .select('id')
+        .eq('login', user.login)
+        .eq('password_hash', result)
+        .maybeSingle();
+
+      if (!verifiedUser) {
+        showToast('Nieprawidłowe hasło. Usuwanie anulowane.', 'error');
+        return;
+      }
+
       const success = await inventoryService.delete(id);
       if (success) {
+        showToast('Inwentaryzacja została usunięta.', 'success');
         await loadInventories();
       } else {
         showToast('Wystąpił błąd podczas usuwania inwentaryzacji.', 'error');

@@ -27,6 +27,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   const [suggestionOffset, setSuggestionOffset] = useState(0);
   const [hasMoreSuggestions, setHasMoreSuggestions] = useState(true);
   const [loadingMoreSuggestions, setLoadingMoreSuggestions] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [newEntry, setNewEntry] = useState({
     pku_w: '',
     product_name: '',
@@ -181,7 +182,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   };
 
   const handleSubmitEntry = async () => {
-    if (!newEntry.product_name || !selectedCategory) return;
+    if (!newEntry.product_name || !selectedCategory || submitting) return;
 
     const categoryToUse = newEntry.category_id || selectedCategory;
 
@@ -190,40 +191,48 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       return;
     }
 
-    let entry;
-    if (editingEntry) {
-      entry = await entryService.updatePreliminaryEntry(editingEntry.id, {
-        ...newEntry,
-        category_id: categoryToUse
-      });
-    } else {
-      entry = await entryService.createPreliminaryEntry({
-        inventory_id: inventoryId,
+    setSubmitting(true);
+
+    try {
+      let entry;
+      if (editingEntry) {
+        entry = await entryService.updatePreliminaryEntry(editingEntry.id, {
+          ...newEntry,
+          category_id: categoryToUse
+        });
+      } else {
+        entry = await entryService.createPreliminaryEntry({
+          inventory_id: inventoryId,
+          category_id: categoryToUse,
+          ...newEntry
+        });
+      }
+
+      if (!entry) {
+        showToast('Nie udało się zapisać wpisu', 'error');
+        return;
+      }
+
+      await productService.createOrUpdate({
+        name: newEntry.product_name,
+        barcode: newEntry.barcode || undefined,
+        unit: newEntry.unit,
+        net_price: newEntry.net_price,
         category_id: categoryToUse,
-        ...newEntry
+        pku_w: newEntry.pku_w || undefined,
+        invoice_number: newEntry.invoice_number || undefined,
+        notes: newEntry.notes || undefined
       });
+
+      showToast('Produkt dodany do inwentaryzacji i zapisany w bazie produktów', 'success');
+      setShowAddModal(false);
+      resetEntryForm();
+      await loadEntries();
+    } catch (error) {
+      showToast('Wystąpił błąd podczas dodawania produktu', 'error');
+    } finally {
+      setSubmitting(false);
     }
-
-    if (!entry) {
-      showToast('Nie udało się zapisać wpisu', 'error');
-      return;
-    }
-
-    await productService.createOrUpdate({
-      name: newEntry.product_name,
-      barcode: newEntry.barcode || undefined,
-      unit: newEntry.unit,
-      net_price: newEntry.net_price,
-      category_id: categoryToUse,
-      pku_w: newEntry.pku_w || undefined,
-      invoice_number: newEntry.invoice_number || undefined,
-      notes: newEntry.notes || undefined
-    });
-
-    showToast('Produkt dodany do inwentaryzacji i zapisany w bazie produktów', 'success');
-    setShowAddModal(false);
-    resetEntryForm();
-    await loadEntries();
   };
 
   const handleDeleteEntry = async (id: string) => {
@@ -616,10 +625,10 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
             </button>
             <button
               onClick={handleSubmitEntry}
-              disabled={!newEntry.product_name || (!newEntry.category_id && !selectedCategory)}
+              disabled={!newEntry.product_name || (!newEntry.category_id && !selectedCategory) || submitting}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {editingEntry ? "Zapisz zmiany" : "Dodaj do inwentaryzacji"}
+              {submitting ? 'Zapisywanie...' : (editingEntry ? "Zapisz zmiany" : "Dodaj do inwentaryzacji")}
             </button>
           </div>
         </div>

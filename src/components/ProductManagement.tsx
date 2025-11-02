@@ -15,6 +15,7 @@ export default function ProductManagement() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeSearchQuery, setActiveSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -46,7 +47,7 @@ export default function ProductManagement() {
       updateCount();
     }, 0);
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, selectedCategory]);
+  }, [activeSearchQuery, selectedCategory]);
 
   useEffect(() => {
     if (categories.length > 0 && !newProduct.category_id && !editingProduct) {
@@ -68,7 +69,7 @@ export default function ProductManagement() {
   };
 
   const updateCount = async () => {
-    const count = await productService.getCount(searchQuery || undefined, selectedCategory || undefined);
+    const count = await productService.getCount(activeSearchQuery || undefined, selectedCategory || undefined);
     setTotalCount(count);
   };
 
@@ -83,7 +84,7 @@ export default function ProductManagement() {
     }
 
     const offset = reset ? 0 : products.length;
-    const data = await productService.search(searchQuery || '', selectedCategory, 50, offset);
+    const data = await productService.search(activeSearchQuery || '', selectedCategory, 50, offset);
 
     if (data.length < 50) {
       setHasMore(false);
@@ -95,6 +96,16 @@ export default function ProductManagement() {
     } else {
       setProducts(prev => [...prev, ...data]);
       setLoadingMore(false);
+    }
+  };
+
+  const handleSearch = () => {
+    setActiveSearchQuery(searchQuery);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
     }
   };
 
@@ -240,15 +251,24 @@ export default function ProductManagement() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Nazwa produktu:
             </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-                placeholder="Wpisz nazwę..."
-              />
+            <div className="relative flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
+                  className="w-full pl-10 pr-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                  placeholder="Wpisz nazwę..."
+                />
+              </div>
+              <button
+                onClick={handleSearch}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
+              >
+                Szukaj
+              </button>
             </div>
           </div>
 
@@ -380,7 +400,7 @@ export default function ProductManagement() {
             <Package className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">Brak produktów</h3>
             <p className="mt-1 text-sm text-gray-500">
-              {searchQuery || selectedCategory 
+              {activeSearchQuery || selectedCategory
                 ? 'Nie znaleziono produktów spełniających kryteria wyszukiwania.'
                 : 'Dodaj pierwszy produkt do bazy danych.'
               }

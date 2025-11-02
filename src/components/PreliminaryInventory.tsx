@@ -28,6 +28,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   const [hasMoreSuggestions, setHasMoreSuggestions] = useState(true);
   const [loadingMoreSuggestions, setLoadingMoreSuggestions] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const [newEntry, setNewEntry] = useState({
     pku_w: '',
     product_name: '',
@@ -83,16 +84,22 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     setHasMoreSuggestions(true);
   };
 
-  const handleProductNameChange = async (value: string) => {
+  const handleProductNameChange = (value: string) => {
     setNewEntry({...newEntry, product_name: value});
 
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
     if (value.length >= 2) {
-      setSuggestionOffset(0);
-      setHasMoreSuggestions(true);
-      const categoryToUse = newEntry.category_id || selectedCategory;
-      const suggestions = await productService.search(value, categoryToUse, 50, 0);
-      setProductSuggestions(suggestions);
-      setHasMoreSuggestions(suggestions.length === 50);
+      searchTimeoutRef.current = setTimeout(async () => {
+        setSuggestionOffset(0);
+        setHasMoreSuggestions(true);
+        const categoryToUse = newEntry.category_id || selectedCategory;
+        const suggestions = await productService.search(value, categoryToUse, 50, 0);
+        setProductSuggestions(suggestions);
+        setHasMoreSuggestions(suggestions.length === 50);
+      }, 300);
     } else {
       setProductSuggestions([]);
       setSuggestionOffset(0);
@@ -130,14 +137,20 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     }
   };
 
-  const handleBarcodeOrNameSearch = async (value: string) => {
+  const handleBarcodeOrNameSearch = (value: string) => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
     if (value.length >= 2) {
-      setSuggestionOffset(0);
-      setHasMoreSuggestions(true);
-      const categoryToUse = newEntry.category_id || selectedCategory;
-      const suggestions = await productService.search(value, categoryToUse, 50, 0);
-      setProductSuggestions(suggestions);
-      setHasMoreSuggestions(suggestions.length === 50);
+      searchTimeoutRef.current = setTimeout(async () => {
+        setSuggestionOffset(0);
+        setHasMoreSuggestions(true);
+        const categoryToUse = newEntry.category_id || selectedCategory;
+        const suggestions = await productService.search(value, categoryToUse, 50, 0);
+        setProductSuggestions(suggestions);
+        setHasMoreSuggestions(suggestions.length === 50);
+      }, 300);
     } else {
       setProductSuggestions([]);
       setSuggestionOffset(0);

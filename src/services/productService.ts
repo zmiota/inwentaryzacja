@@ -12,12 +12,7 @@ export const productService = {
       let queryBuilder = supabase
         .from('products')
         .select('*, category:categories(*)')
-        .order('name', { ascending: true })
-        .range(offset, offset + limit - 1);
-
-      if (query) {
-        queryBuilder = queryBuilder.or(`name.ilike.%${query}%,barcode.ilike.%${query}%`);
-      }
+        .order('name', { ascending: true });
 
       if (categoryId) {
         queryBuilder = queryBuilder.eq('category_id', categoryId);
@@ -26,7 +21,27 @@ export const productService = {
       const { data, error } = await queryBuilder;
 
       if (error) throw error;
-      return data || [];
+
+      let filteredData = data || [];
+
+      // Filtruj dane po stronie klienta, aby obsługiwać wiele słów kluczowych
+      if (query && query.trim()) {
+        const keywords = query.trim().toLowerCase().split(/\s+/);
+        filteredData = filteredData.filter(product => {
+          const productName = product.name.toLowerCase();
+          const productBarcode = (product.barcode || '').toLowerCase();
+
+          // Sprawdź, czy wszystkie słowa kluczowe występują w nazwie lub kodzie kreskowym
+          return keywords.every(keyword =>
+            productName.includes(keyword) || productBarcode.includes(keyword)
+          );
+        });
+      }
+
+      // Zastosuj paginację po filtrowaniu
+      const paginatedData = filteredData.slice(offset, offset + limit);
+
+      return paginatedData;
     } catch (error) {
       console.error('Błąd podczas wyszukiwania produktów:', error);
       return [];
@@ -191,20 +206,33 @@ export const productService = {
     try {
       let queryBuilder = supabase
         .from('products')
-        .select('*', { count: 'exact', head: true });
-
-      if (query) {
-        queryBuilder = queryBuilder.or(`name.ilike.%${query}%,barcode.ilike.%${query}%`);
-      }
+        .select('*');
 
       if (categoryId) {
         queryBuilder = queryBuilder.eq('category_id', categoryId);
       }
 
-      const { count, error } = await queryBuilder;
+      const { data, error } = await queryBuilder;
 
       if (error) throw error;
-      return count || 0;
+
+      let filteredData = data || [];
+
+      // Filtruj dane po stronie klienta, aby obsługiwać wiele słów kluczowych
+      if (query && query.trim()) {
+        const keywords = query.trim().toLowerCase().split(/\s+/);
+        filteredData = filteredData.filter(product => {
+          const productName = product.name.toLowerCase();
+          const productBarcode = (product.barcode || '').toLowerCase();
+
+          // Sprawdź, czy wszystkie słowa kluczowe występują w nazwie lub kodzie kreskowym
+          return keywords.every(keyword =>
+            productName.includes(keyword) || productBarcode.includes(keyword)
+          );
+        });
+      }
+
+      return filteredData.length;
     } catch (error) {
       console.error('Błąd podczas pobierania liczby produktów:', error);
       return 0;

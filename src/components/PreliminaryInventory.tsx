@@ -89,7 +89,8 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     if (value.length >= 2) {
       setSuggestionOffset(0);
       setHasMoreSuggestions(true);
-      const suggestions = await productService.search(value, undefined, 50, 0);
+      const categoryToUse = newEntry.category_id || selectedCategory;
+      const suggestions = await productService.search(value, categoryToUse, 50, 0);
       setProductSuggestions(suggestions);
       setHasMoreSuggestions(suggestions.length === 50);
     } else {
@@ -133,7 +134,8 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     if (value.length >= 2) {
       setSuggestionOffset(0);
       setHasMoreSuggestions(true);
-      const suggestions = await productService.search(value, undefined, 50, 0);
+      const categoryToUse = newEntry.category_id || selectedCategory;
+      const suggestions = await productService.search(value, categoryToUse, 50, 0);
       setProductSuggestions(suggestions);
       setHasMoreSuggestions(suggestions.length === 50);
     } else {
@@ -148,7 +150,8 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
     setLoadingMoreSuggestions(true);
     const newOffset = suggestionOffset + 50;
-    const moreSuggestions = await productService.search(newEntry.product_name, undefined, 50, newOffset);
+    const categoryToUse = newEntry.category_id || selectedCategory;
+    const moreSuggestions = await productService.search(newEntry.product_name, categoryToUse, 50, newOffset);
 
     setProductSuggestions(prev => [...prev, ...moreSuggestions]);
     setSuggestionOffset(newOffset);

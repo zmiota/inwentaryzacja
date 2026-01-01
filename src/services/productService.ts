@@ -2,58 +2,55 @@ import { supabase } from '../lib/supabase';
 import { Product } from '../types';
 
 export const productService = {
-async search(
-  query: string = '',
-  categoryId?: string,
-  limit: number = 50,
-  offset: number = 0
-): Promise<Product[]> {
-  try {
-    let queryBuilder = supabase
-      .from('products')
-      .select('*, category:categories(*)')
-      .order('name', { ascending: true });
+  async search(
+    query: string = '',
+    categoryId?: string,
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<Product[]> {
+    try {
+      let queryBuilder = supabase
+        .from('products')
+        .select('*, category:categories(*)')
+        .order('name', { ascending: true });
 
-    if (categoryId && categoryId.trim() !== '') {
-      queryBuilder = queryBuilder.eq('category_id', categoryId);
+      if (categoryId && categoryId.trim() !== '') {
+        queryBuilder = queryBuilder.eq('category_id', categoryId);
+      }
+
+      // Filtrowanie po stronie serwera (Szybkie)
+      if (query && query.trim().length >= 2) {
+        const keywords = query.trim().toLowerCase().split(/\s+/);
+        keywords.forEach(keyword => {
+          const pattern = `%${keyword}%`;
+          queryBuilder = queryBuilder.or(`name.ilike.${pattern},barcode.ilike.${pattern}`);
+        });
+      }
+
+      // Prawdziwa paginacja - omija limit 1000
+      const { data, error } = await queryBuilder
+        .range(offset, offset + limit - 1);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Błąd podczas wyszukiwania:', error);
+      return [];
     }
-
-    // WAŻNE: Filtrowanie MUSI odbywać się w bazie, nie w JS
-    if (query && query.trim().length >= 2) {
-      const keywords = query.trim().toLowerCase().split(/\s+/);
-      keywords.forEach(keyword => {
-        const pattern = `%${keyword}%`;
-        queryBuilder = queryBuilder.or(`name.ilike.${pattern},barcode.ilike.${pattern}`);
-      });
-    }
-
-    // KLUCZ: .range() pozwala ominąć limit 1000 produktów
-    // offset to np. 0, 50, 100... 
-    // range(0, 49) -> pierwsze 50
-    // range(1000, 1049) -> produkty od 1001 do 1050
-    const { data, error } = await queryBuilder
-      .range(offset, offset + limit - 1);
-
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Błąd podczas wyszukiwania:', error);
-    return [];
-  }
-},
+  },
 
   async getCount(query?: string, categoryId?: string): Promise<number> {
     try {
-      // Head: true sprawia, że nie pobieramy danych, tylko samą liczbę rekordów
+      // Pobieramy TYLKO liczbę, nie rekordy
       let queryBuilder = supabase
         .from('products')
         .select('*', { count: 'exact', head: true });
 
-      if (categoryId) {
+      if (categoryId && categoryId.trim() !== '') {
         queryBuilder = queryBuilder.eq('category_id', categoryId);
       }
 
-      if (query && query.trim()) {
+      if (query && query.trim().length >= 2) {
         const keywords = query.trim().toLowerCase().split(/\s+/);
         keywords.forEach(keyword => {
           const pattern = `%${keyword}%`;
@@ -65,7 +62,7 @@ async search(
       if (error) throw error;
       return count || 0;
     } catch (error) {
-      console.error('Błąd podczas pobierania liczby produktów:', error);
+      console.error('Błąd getCount:', error);
       return 0;
     }
   },

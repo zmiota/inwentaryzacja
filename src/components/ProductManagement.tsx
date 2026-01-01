@@ -73,7 +73,7 @@ export default function ProductManagement() {
     setTotalCount(count);
   };
 
-  const loadProducts = async (reset: boolean = false) => {
+ const loadProducts = async (reset: boolean = false) => {
   // 1. Zabezpieczenie przed przeładowaniem: 
   // Nie ładuj, jeśli już trwa ładowanie ALBO jeśli nie ma więcej danych (chyba że to reset)
   if ((loading || loadingMore) && !reset) return;

@@ -202,40 +202,39 @@ export const productService = {
     }
   },
 
-  async getCount(query?: string, categoryId?: string): Promise<number> {
-    try {
-      let queryBuilder = supabase
-        .from('products')
-        .select('*');
+async getCount(query?: string, categoryId?: string): Promise<number> {
+  try {
+    // 1. Używamy count: 'exact' i head: true (nie pobieramy wierszy, tylko samą liczbę)
+    let queryBuilder = supabase
+      .from('products')
+      .select('*', { count: 'exact', head: true });
 
-      if (categoryId) {
-        queryBuilder = queryBuilder.eq('category_id', categoryId);
-      }
-
-      const { data, error } = await queryBuilder;
-
-      if (error) throw error;
-
-      let filteredData = data || [];
-
-      // Filtruj dane po stronie klienta, aby obsługiwać wiele słów kluczowych
-      if (query && query.trim()) {
-        const keywords = query.trim().toLowerCase().split(/\s+/);
-        filteredData = filteredData.filter(product => {
-          const productName = product.name.toLowerCase();
-          const productBarcode = (product.barcode || '').toLowerCase();
-
-          // Sprawdź, czy wszystkie słowa kluczowe występują w nazwie lub kodzie kreskowym
-          return keywords.every(keyword =>
-            productName.includes(keyword) || productBarcode.includes(keyword)
-          );
-        });
-      }
-
-      return filteredData.length;
-    } catch (error) {
-      console.error('Błąd podczas pobierania liczby produktów:', error);
-      return 0;
+    // 2. Filtrowanie kategorii po stronie bazy
+    if (categoryId) {
+      queryBuilder = queryBuilder.eq('category_id', categoryId);
     }
+
+    // 3. Filtrowanie wyszukiwania po stronie bazy
+    if (query && query.trim()) {
+      const keywords = query.trim().toLowerCase().split(/\s+/);
+      
+      // Tworzymy zapytanie, które sprawdza czy nazwa lub kod zawiera słowa kluczowe
+      // Przykład dla wielu słów: .ilike('name', '%słowo1%').ilike('name', '%słowo2%')
+      keywords.forEach(keyword => {
+        const pattern = `%${keyword}%`;
+        // Używamy or, aby przeszukać nazwę LUB kod kreskowy dla każdego słowa
+        queryBuilder = queryBuilder.or(`name.ilike.${pattern},barcode.ilike.${pattern}`);
+      });
+    }
+
+    const { count, error } = await queryBuilder;
+
+    if (error) throw error;
+
+    return count || 0;
+  } catch (error) {
+    console.error('Błąd podczas pobierania liczby produktów:', error);
+    return 0;
   }
+}
 };

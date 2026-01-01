@@ -74,15 +74,13 @@ export default function ProductManagement() {
   };
 
  const loadProducts = async (reset: boolean = false) => {
-  // 1. Zabezpieczenie przed przeładowaniem: 
-  // Nie ładuj, jeśli już trwa ładowanie ALBO jeśli nie ma więcej danych (chyba że to reset)
+  // Blokada przed wielokrotnym kliknięciem i ładowaniem pustych danych
   if ((loading || loadingMore) && !reset) return;
   if (!hasMore && !reset) return;
 
   if (reset) {
     setLoading(true);
     setHasMore(true);
-    // Ważne: przy resecie czyścimy offset w serwisie (poprzez przesłanie 0)
   } else {
     setLoadingMore(true);
   }
@@ -90,8 +88,6 @@ export default function ProductManagement() {
   try {
     const offset = reset ? 0 : products.length;
     
-    // 2. Wywołanie serwisu, który teraz używa .range(offset, offset + 49)
-    // Dzięki temu przy products.length = 1000, pobierze rekordy 1000-1049
     const data = await productService.search(
       activeSearchQuery || '', 
       selectedCategory, 
@@ -99,21 +95,21 @@ export default function ProductManagement() {
       offset
     );
 
-    // 3. Sprawdzanie, czy są kolejne dane
-    if (data.length < 50) {
-      setHasMore(false);
-    } else {
-      setHasMore(true);
-    }
+    // Jeśli baza zwróciła mniej niż 50, znaczy że to ostatnia strona
+    setHasMore(data.length === 50);
 
     if (reset) {
       setProducts(data);
     } else {
-      // Łączenie starej listy z nowymi 50 produktami
-      setProducts(prev => [...prev, ...data]);
+      // Kluczowe dla wydajności: nie pozwalamy na duplikaty
+      setProducts(prev => {
+        const existingIds = new Set(prev.map(p => p.id));
+        const newOnes = data.filter(p => !existingIds.has(p.id));
+        return [...prev, ...newOnes];
+      });
     }
   } catch (error) {
-    showToast('Błąd podczas ładowania produktów', 'error');
+    showToast('Błąd ładowania produktów', 'error');
   } finally {
     setLoading(false);
     setLoadingMore(false);

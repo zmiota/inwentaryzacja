@@ -2,50 +2,45 @@ import { supabase } from '../lib/supabase';
 import { Product } from '../types';
 
 export const productService = {
-  async search(
-    query: string,
-    categoryId?: string,
-    limit: number = 50,
-    offset: number = 0
-  ): Promise<Product[]> {
-    try {
-      // 1. Inicjalizacja zapytania z JOINem do kategorii
-      let queryBuilder = supabase
-        .from('products')
-        .select('*, category:categories(*)')
-        .order('name', { ascending: true });
+async search(
+  query: string = '',
+  categoryId?: string,
+  limit: number = 50,
+  offset: number = 0
+): Promise<Product[]> {
+  try {
+    let queryBuilder = supabase
+      .from('products')
+      .select('*, category:categories(*)')
+      .order('name', { ascending: true });
 
-      // 2. Filtrowanie kategorii (na poziomie bazy danych)
-      if (categoryId) {
-        queryBuilder = queryBuilder.eq('category_id', categoryId);
-      }
-
-      // 3. Zaawansowane wyszukiwanie słów kluczowych (na poziomie bazy danych)
-      // Logika: Każde słowo musi wystąpić w nazwie LUB kodzie kreskowym (AND dla słów)
-      if (query && query.trim()) {
-        const keywords = query.trim().toLowerCase().split(/\s+/);
-        
-        keywords.forEach(keyword => {
-          const pattern = `%${keyword}%`;
-          // Używamy .or(), aby sprawdzić nazwę lub kod dla konkretnego słowa
-          // Chaining wielu .or() w Supabase działa jak operator AND między nimi
-          queryBuilder = queryBuilder.or(`name.ilike.${pattern},barcode.ilike.${pattern}`);
-        });
-      }
-
-      // 4. Prawdziwa paginacja (Pobieramy tylko to, co wyświetlamy)
-      // .range(0, 49) pobierze dokładnie 50 rekordów
-      const { data, error } = await queryBuilder
-        .range(offset, offset + limit - 1);
-
-      if (error) throw error;
-
-      return data || [];
-    } catch (error) {
-      console.error('Błąd podczas wyszukiwania produktów:', error);
-      return [];
+    if (categoryId && categoryId.trim() !== '') {
+      queryBuilder = queryBuilder.eq('category_id', categoryId);
     }
-  },
+
+    // WAŻNE: Filtrowanie MUSI odbywać się w bazie, nie w JS
+    if (query && query.trim().length >= 2) {
+      const keywords = query.trim().toLowerCase().split(/\s+/);
+      keywords.forEach(keyword => {
+        const pattern = `%${keyword}%`;
+        queryBuilder = queryBuilder.or(`name.ilike.${pattern},barcode.ilike.${pattern}`);
+      });
+    }
+
+    // KLUCZ: .range() pozwala ominąć limit 1000 produktów
+    // offset to np. 0, 50, 100... 
+    // range(0, 49) -> pierwsze 50
+    // range(1000, 1049) -> produkty od 1001 do 1050
+    const { data, error } = await queryBuilder
+      .range(offset, offset + limit - 1);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Błąd podczas wyszukiwania:', error);
+    return [];
+  }
+},
 
   async getCount(query?: string, categoryId?: string): Promise<number> {
     try {

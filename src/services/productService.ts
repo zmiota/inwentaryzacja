@@ -1,52 +1,44 @@
 import { supabase } from '../lib/supabase';
 import { Product } from '../types';
 
-export const productService = {
-  async search(
-    query: string,
-    categoryId?: string,
-    limit: number = 50,
-    offset: number = 0
-  ): Promise<Product[]> {
-    try {
-      let queryBuilder = supabase
-        .from('products')
-        .select('*, category:categories(*)')
-        .order('name', { ascending: true });
+async search(
+  query: string,
+  categoryId?: string,
+  limit: number = 50,
+  offset: number = 0
+): Promise<Product[]> {
+  try {
+    let queryBuilder = supabase
+      .from('products')
+      .select('*, category:categories(*)')
+      .order('name', { ascending: true });
 
-      if (categoryId) {
-        queryBuilder = queryBuilder.eq('category_id', categoryId);
-      }
-
-      const { data, error } = await queryBuilder;
-
-      if (error) throw error;
-
-      let filteredData = data || [];
-
-      // Filtruj dane po stronie klienta, aby obsługiwać wiele słów kluczowych
-      if (query && query.trim()) {
-        const keywords = query.trim().toLowerCase().split(/\s+/);
-        filteredData = filteredData.filter(product => {
-          const productName = product.name.toLowerCase();
-          const productBarcode = (product.barcode || '').toLowerCase();
-
-          // Sprawdź, czy wszystkie słowa kluczowe występują w nazwie lub kodzie kreskowym
-          return keywords.every(keyword =>
-            productName.includes(keyword) || productBarcode.includes(keyword)
-          );
-        });
-      }
-
-      // Zastosuj paginację po filtrowaniu
-      const paginatedData = filteredData.slice(offset, offset + limit);
-
-      return paginatedData;
-    } catch (error) {
-      console.error('Błąd podczas wyszukiwania produktów:', error);
-      return [];
+    // 1. Filtrowanie kategorii w bazie
+    if (categoryId) {
+      queryBuilder = queryBuilder.eq('category_id', categoryId);
     }
-  },
+
+    // 2. Filtrowanie słów kluczowych w bazie (tak jak w getCount)
+    if (query && query.trim()) {
+      const keywords = query.trim().toLowerCase().split(/\s+/);
+      keywords.forEach(keyword => {
+        const pattern = `%${keyword}%`;
+        queryBuilder = queryBuilder.or(`name.ilike.${pattern},barcode.ilike.${pattern}`);
+      });
+    }
+
+    // 3. PRAWDZIWA paginacja w bazie danych
+    // Pobieramy tylko te 50 rekordów, których aktualnie potrzebujemy
+    const { data, error } = await queryBuilder
+      .range(offset, offset + limit - 1);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Błąd podczas wyszukiwania produktów:', error);
+    return [];
+  }
+}
 
   async getByBarcode(barcode: string): Promise<Product | null> {
     try {

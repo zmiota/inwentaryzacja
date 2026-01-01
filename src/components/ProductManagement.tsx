@@ -74,30 +74,51 @@ export default function ProductManagement() {
   };
 
   const loadProducts = async (reset: boolean = false) => {
-    if (!hasMore && !reset) return;
+  // 1. Zabezpieczenie przed przeładowaniem: 
+  // Nie ładuj, jeśli już trwa ładowanie ALBO jeśli nie ma więcej danych (chyba że to reset)
+  if ((loading || loadingMore) && !reset) return;
+  if (!hasMore && !reset) return;
 
-    if (reset) {
-      setLoading(true);
-      setHasMore(true);
-    } else {
-      setLoadingMore(true);
-    }
+  if (reset) {
+    setLoading(true);
+    setHasMore(true);
+    // Ważne: przy resecie czyścimy offset w serwisie (poprzez przesłanie 0)
+  } else {
+    setLoadingMore(true);
+  }
 
+  try {
     const offset = reset ? 0 : products.length;
-    const data = await productService.search(activeSearchQuery || '', selectedCategory, 50, offset);
+    
+    // 2. Wywołanie serwisu, który teraz używa .range(offset, offset + 49)
+    // Dzięki temu przy products.length = 1000, pobierze rekordy 1000-1049
+    const data = await productService.search(
+      activeSearchQuery || '', 
+      selectedCategory, 
+      50, 
+      offset
+    );
 
+    // 3. Sprawdzanie, czy są kolejne dane
     if (data.length < 50) {
       setHasMore(false);
+    } else {
+      setHasMore(true);
     }
 
     if (reset) {
       setProducts(data);
-      setLoading(false);
     } else {
+      // Łączenie starej listy z nowymi 50 produktami
       setProducts(prev => [...prev, ...data]);
-      setLoadingMore(false);
     }
-  };
+  } catch (error) {
+    showToast('Błąd podczas ładowania produktów', 'error');
+  } finally {
+    setLoading(false);
+    setLoadingMore(false);
+  }
+};
 
   const handleSearch = () => {
     setActiveSearchQuery(searchQuery);

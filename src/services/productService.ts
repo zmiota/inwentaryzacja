@@ -40,32 +40,40 @@ export const productService = {
   },
 
   async getCount(query?: string, categoryId?: string): Promise<number> {
-    try {
-      // Pobieramy TYLKO liczbę, nie rekordy
-      let queryBuilder = supabase
-        .from('products')
-        .select('*', { count: 'exact', head: true });
+  try {
+    // 1. Używamy count: 'exact' i head: true (nie pobieramy wierszy, tylko samą liczbę)
+    let queryBuilder = supabase
+      .from('products')
+      .select('*', { count: 'exact', head: true });
 
-      if (categoryId && categoryId.trim() !== '') {
-        queryBuilder = queryBuilder.eq('category_id', categoryId);
-      }
-
-      if (query && query.trim().length >= 2) {
-        const keywords = query.trim().toLowerCase().split(/\s+/);
-        keywords.forEach(keyword => {
-          const pattern = `%${keyword}%`;
-          queryBuilder = queryBuilder.or(`name.ilike.${pattern},barcode.ilike.${pattern}`);
-        });
-      }
-
-      const { count, error } = await queryBuilder;
-      if (error) throw error;
-      return count || 0;
-    } catch (error) {
-      console.error('Błąd getCount:', error);
-      return 0;
+    // 2. Filtrowanie kategorii po stronie bazy
+    if (categoryId) {
+      queryBuilder = queryBuilder.eq('category_id', categoryId);
     }
-  },
+
+    // 3. Filtrowanie wyszukiwania po stronie bazy
+    if (query && query.trim()) {
+      const keywords = query.trim().toLowerCase().split(/\s+/);
+      
+      // Tworzymy zapytanie, które sprawdza czy nazwa lub kod zawiera słowa kluczowe
+      // Przykład dla wielu słów: .ilike('name', '%słowo1%').ilike('name', '%słowo2%')
+      keywords.forEach(keyword => {
+        const pattern = `%${keyword}%`;
+        // Używamy or, aby przeszukać nazwę LUB kod kreskowy dla każdego słowa
+        queryBuilder = queryBuilder.or(`name.ilike.${pattern},barcode.ilike.${pattern}`);
+      });
+    }
+
+    const { count, error } = await queryBuilder;
+
+    if (error) throw error;
+
+    return count || 0;
+  } catch (error) {
+    console.error('Błąd podczas pobierania liczby produktów:', error);
+    return 0;
+  }
+},
 
   async getByBarcode(barcode: string): Promise<Product | null> {
     try {

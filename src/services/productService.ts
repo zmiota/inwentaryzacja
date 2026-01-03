@@ -96,7 +96,27 @@ export const productService = {
       return null;
     }
   },
+async createOrUpdate(productData: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'user_id'>): Promise<Product | null> {
+    try {
+      let existingProduct = null;
 
+      // 1. Próbuj znaleźć po kodzie kreskowym (jeśli podany)
+      if (productData.barcode) {
+        existingProduct = await this.getByBarcode(productData.barcode);
+      }
+
+      if (existingProduct) {
+        // 2. Jeśli istnieje - aktualizuj
+        return await this.update(existingProduct.id, productData);
+      } else {
+        // 3. Jeśli nie istnieje - stwórz nowy
+        return await this.create(productData);
+      }
+    } catch (error) {
+      console.error('Błąd w createOrUpdate:', error);
+      throw error;
+    }
+  },
   async create(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product | null> {
     try {
       const storedUser = localStorage.getItem('app_user');

@@ -39,7 +39,7 @@ export const productService = {
     }
   },
 
-  async getCount(query?: string, categoryId?: string): Promise<number> {
+async getCount(query?: string, categoryId?: string): Promise<number> {
   try {
     // 1. Używamy count: 'exact' i head: true (nie pobieramy wierszy, tylko samą liczbę)
     let queryBuilder = supabase

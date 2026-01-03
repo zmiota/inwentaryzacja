@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 import { InventoryEntry, FinalInventoryEntry } from '../types';
 
 export const entryService = {
-  // Pobieranie wpisów z paginacją
+  // 1. Pobieranie wpisów z paginacją (limit 250)
   async getPreliminaryEntries(
     inventoryId: string, 
     categoryId?: string, 
@@ -31,7 +31,7 @@ export const entryService = {
     }
   },
 
-  // Statystyki kategorii (Liczenie > 1000 rekordów)
+  // 2. Statystyki kategorii (Liczenie > 1000 rekordów metodą batchingu)
   async getCategoryStats(inventoryId: string, categoryId: string): Promise<{ count: number, totalValue: number }> {
     try {
       const { count, error: countError } = await supabase
@@ -72,6 +72,7 @@ export const entryService = {
     }
   },
 
+  // 3. Tworzenie wpisu wstępnego
   async createPreliminaryEntry(entry: Omit<InventoryEntry, 'id' | 'net_value' | 'created_at' | 'updated_at'>): Promise<InventoryEntry | null> {
     const { data, error } = await supabase
       .from('inventory_entries')
@@ -79,10 +80,11 @@ export const entryService = {
       .select('*')
       .single();
     
-    if (error) throw error; // Wyrzucamy błąd do handleSubmitEntry
+    if (error) throw error;
     return data;
   },
 
+  // 4. Aktualizacja wpisu wstępnego
   async updatePreliminaryEntry(id: string, updates: Partial<InventoryEntry>): Promise<InventoryEntry | null> {
     const { data, error } = await supabase
       .from('inventory_entries')
@@ -95,123 +97,80 @@ export const entryService = {
     return data;
   },
 
+  // 5. Usuwanie wpisu wstępnego
   async deletePreliminaryEntry(id: string): Promise<boolean> {
     const { error } = await supabase.from('inventory_entries').delete().eq('id', id);
     if (error) throw error;
     return true;
-  }
-},
+  },
 
-  // Inwentaryzacja końcowa
+  // 6. Inwentaryzacja końcowa - Pobieranie
   async getFinalEntries(inventoryId: string): Promise<FinalInventoryEntry[]> {
-    try {
-      const { data, error } = await supabase
-        .from('final_inventory_entries')
-        .select('*')
-        .eq('inventory_id', inventoryId)
-        .order('sequence_number');
-      
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Błąd podczas pobierania wpisów końcowych:', error);
-      return [];
-    }
+    const { data, error } = await supabase
+      .from('final_inventory_entries')
+      .select('*')
+      .eq('inventory_id', inventoryId)
+      .order('sequence_number');
+    
+    if (error) throw error;
+    return data || [];
   },
 
+  // 7. Generowanie raportu końcowego
   async generateFinalFromPreliminary(inventoryId: string): Promise<boolean> {
-    try {
-      // Pobierz wszystkie wpisy wstępne
-      const { data: preliminaryEntries, error: fetchError } = await supabase
-        .from('inventory_entries')
-        .select('*')
-        .eq('inventory_id', inventoryId)
-        .order('category_id', { ascending: true });
+    const { data: preliminaryEntries, error: fetchError } = await supabase
+      .from('inventory_entries')
+      .select('*')
+      .eq('inventory_id', inventoryId)
+      .order('category_id', { ascending: true });
 
-      if (fetchError) throw fetchError;
+    if (fetchError) throw fetchError;
 
-      // Usuń istniejące wpisy końcowe
-      const { error: deleteError } = await supabase
-        .from('final_inventory_entries')
-        .delete()
-        .eq('inventory_id', inventoryId);
+    await supabase.from('final_inventory_entries').delete().eq('inventory_id', inventoryId);
 
-      if (deleteError) throw deleteError;
+    if (!preliminaryEntries || preliminaryEntries.length === 0) return true;
 
-      if (!preliminaryEntries || preliminaryEntries.length === 0) return true;
+    const finalEntries = preliminaryEntries.map((entry, index) => ({
+      inventory_id: inventoryId,
+      sequence_number: index + 1,
+      product_name: entry.product_name,
+      unit: entry.unit,
+      quantity: entry.quantity,
+      net_price: entry.net_price,
+      pku_w: entry.pku_w || '',
+      barcode: entry.barcode || null,
+      invoice_number: entry.invoice_number || null,
+      notes: entry.notes || null,
+      category_id: entry.category_id || null,
+    }));
 
-      // Twórz wpisy końcowe z wpisów wstępnych
-      const finalEntries = preliminaryEntries.map((entry, index) => ({
-        inventory_id: inventoryId,
-        sequence_number: index + 1,
-        product_name: entry.product_name,
-        unit: entry.unit,
-        quantity: entry.quantity,
-        net_price: entry.net_price,
-        pku_w: entry.pku_w || '',
-        barcode: entry.barcode || null,
-        invoice_number: entry.invoice_number || null,
-        notes: entry.notes || null,
-        category_id: entry.category_id || null,
-      }));
-
-      const { error: insertError } = await supabase
-        .from('final_inventory_entries')
-        .insert(finalEntries);
-
-      if (insertError) throw insertError;
-      return true;
-    } catch (error) {
-      console.error('Błąd podczas generowania inwentaryzacji końcowej:', error);
-      return false;
-    }
+    const { error: insertError } = await supabase.from('final_inventory_entries').insert(finalEntries);
+    if (insertError) throw insertError;
+    return true;
   },
 
+  // 8. Operacje na wpisach końcowych
   async createFinalEntry(entry: Omit<FinalInventoryEntry, 'id' | 'net_value' | 'created_at' | 'updated_at'>): Promise<FinalInventoryEntry | null> {
-    try {
-      const { data, error } = await supabase
-        .from('final_inventory_entries')
-        .insert([entry])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Błąd podczas tworzenia wpisu końcowego:', error);
-      return null;
-    }
+    const { data, error } = await supabase.from('final_inventory_entries').insert([entry]).select().single();
+    if (error) throw error;
+    return data;
   },
 
   async updateFinalEntry(id: string, updates: Partial<FinalInventoryEntry>): Promise<FinalInventoryEntry | null> {
-    try {
-      const { data, error } = await supabase
-        .from('final_inventory_entries')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Błąd podczas aktualizacji wpisu końcowego:', error);
-      return null;
-    }
+    const { data, error } = await supabase
+      .from('final_inventory_entries')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
   },
 
   async deleteFinalEntry(id: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('final_inventory_entries')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      return true;
-    } catch (error) {
-      console.error('Błąd podczas usuwania wpisu końcowego:', error);
-      return false;
-    }
+    const { error } = await supabase.from('final_inventory_entries').delete().eq('id', id);
+    if (error) throw error;
+    return true;
   }
 };

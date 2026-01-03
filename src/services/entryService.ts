@@ -100,7 +100,7 @@ export const entryService = {
     if (error) throw error;
     return true;
   }
-};
+},
 
   async getFinalEntries(inventoryId: string): Promise<FinalInventoryEntry[]> {
     try {

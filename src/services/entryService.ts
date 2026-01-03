@@ -6,7 +6,7 @@ export const entryService = {
   async getPreliminaryEntries(
     inventoryId: string, 
     categoryId?: string, 
-    limit: number = 50, 
+    limit: number = 250, 
     offset: number = 0
   ): Promise<InventoryEntry[]> {
     try {
@@ -20,7 +20,7 @@ export const entryService = {
       }
 
       // RANGE jest kluczowe dla paginacji w Supabase
-      // offset to start, offset + limit - 1 to koniec (np. 0 do 49 dla pierwszej paczki)
+      // offset to start, offset + limit - 1 to koniec (np. 0 do 249 dla pierwszej paczki)
       const { data, error } = await query
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);

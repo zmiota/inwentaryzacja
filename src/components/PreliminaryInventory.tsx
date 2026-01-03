@@ -24,9 +24,9 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   const [hasMore, setHasMore] = useState(true);
   
   // STATYSTYKI KATEGORII
-  const [categoryProductCount, setCategoryProductCount] = useState(0); // Produkty w bazie
-  const [categoryEntriesCount, setCategoryEntriesCount] = useState(0); // Liczba wpisów w inwentaryzacji
-  const [categoryTotalValue, setCategoryTotalValue] = useState(0);     // Suma wartości netto
+  const [categoryProductCount, setCategoryProductCount] = useState(0); 
+  const [categoryEntriesCount, setCategoryEntriesCount] = useState(0); 
+  const [categoryTotalValue, setCategoryTotalValue] = useState(0);     
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showOCRModal, setShowOCRModal] = useState(false);
@@ -69,15 +69,10 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     setLoading(false);
   };
 
-  // POBIERANIE WSZYSTKICH STATYSTYK DLA KATEGORII
   const updateCategoryStats = async () => {
     if (!selectedCategory) return;
-    
-    // 1. Liczba produktów zdefiniowanych w bazie w tej kategorii
     const prodCount = await productService.getCount(undefined, selectedCategory);
     setCategoryProductCount(prodCount);
-
-    // 2. Statystyki wpisów inwentaryzacyjnych (liczba i suma wartości)
     const stats = await entryService.getCategoryStats(inventoryId, selectedCategory);
     setCategoryEntriesCount(stats.count);
     setCategoryTotalValue(stats.totalValue);
@@ -163,7 +158,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       setShowAddModal(false);
       resetEntryForm();
       await loadEntries(true);
-      await updateCategoryStats(); // Odświeżamy liczniki
+      await updateCategoryStats(); 
     } catch (error) {
       showToast('Błąd zapisu', 'error');
     } finally {
@@ -171,14 +166,13 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     }
   };
 
-  // Logika wyszukiwania i OCR pozostaje bez zmian...
   const handleBarcodeOrNameSearch = async (value: string) => {
     if (value.length >= 2) {
       setSuggestionOffset(0);
       setHasMoreSuggestions(true);
       const suggestions = await productService.search(value, newEntry.category_id || selectedCategory, 250, 0);
       setProductSuggestions(suggestions);
-      setHasMoreSuggestions(suggestions.length === 50);
+      setHasMoreSuggestions(suggestions.length === 250); // Poprawione na 250
     } else {
       setProductSuggestions([]);
     }
@@ -193,6 +187,56 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     setProductSuggestions([]);
   };
 
+  const handleBarcodeInput = async (barcode: string) => {
+    if (!barcode || barcode.length < 3) return;
+    const product = await productService.getByBarcode(barcode);
+    if (product) {
+      setNewEntry({
+        ...newEntry,
+        product_name: product.name,
+        unit: product.unit,
+        net_price: product.net_price || 0,
+        barcode: barcode,
+        pku_w: product.pku_w || '',
+        category_id: product.category_id || newEntry.category_id
+      });
+    }
+  };
+
+  const loadMoreSuggestions = async () => {
+    if (!hasMoreSuggestions || loadingMoreSuggestions) return;
+    setLoadingMoreSuggestions(true);
+    const newOffset = suggestionOffset + 250;
+    const moreSuggestions = await productService.search(newEntry.product_name, newEntry.category_id || selectedCategory, 250, newOffset);
+    setProductSuggestions(prev => [...prev, ...moreSuggestions]);
+    setSuggestionOffset(newOffset);
+    setHasMoreSuggestions(moreSuggestions.length === 250);
+    setLoadingMoreSuggestions(false);
+  };
+
+  const handleSuggestionScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    if (target.scrollHeight - target.scrollTop <= target.clientHeight + 50) {
+      loadMoreSuggestions();
+    }
+  };
+
+  const handleEditEntry = (entry: InventoryEntry) => {
+    setEditingEntry(entry);
+    setNewEntry({
+      pku_w: entry.pku_w || '',
+      product_name: entry.product_name,
+      unit: entry.unit,
+      quantity: entry.quantity,
+      net_price: entry.net_price,
+      invoice_number: entry.invoice_number || '',
+      barcode: entry.barcode || '',
+      notes: entry.notes || '',
+      category_id: entry.category_id || selectedCategory
+    });
+    setShowAddModal(true);
+  };
+
   const handleDeleteEntry = async (id: string) => {
     const confirmed = await showConfirm({
       title: 'Usuń wpis', message: 'Czy na pewno chcesz usunąć ten wpis?',
@@ -202,7 +246,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       const success = await entryService.deletePreliminaryEntry(id);
       if (success) {
         await loadEntries(true);
-        await updateCategoryStats(); // Odświeżamy liczniki po usunięciu
+        await updateCategoryStats(); 
       }
     }
   };
@@ -234,8 +278,6 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Inwentaryzacja wstępna</h1>
-            
-            {/* PANEL STATYSTYK KATEGORII */}
             <div className="flex flex-wrap gap-2 mt-2">
               <div className="flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-md border border-blue-100 dark:border-blue-800">
                 <Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -243,14 +285,12 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
                   Produkty w bazie: <span className="font-bold">{categoryProductCount}</span>
                 </span>
               </div>
-              
               <div className="flex items-center space-x-2 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-md border border-green-100 dark:border-green-800">
                 <ListChecks className="h-4 w-4 text-green-600 dark:text-green-400" />
                 <span className="text-xs font-medium text-green-700 dark:text-green-300">
                   Wpisy: <span className="font-bold">{categoryEntriesCount}</span>
                 </span>
               </div>
-
               <div className="flex items-center space-x-2 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-md border border-amber-100 dark:border-amber-800">
                 <Calculator className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
@@ -260,7 +300,6 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
             </div>
           </div>
         </div>
-        
         <div className="flex space-x-2 h-fit">
           <button onClick={() => setShowOCRModal(true)} className="flex items-center space-x-2 bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition-colors">
             <Camera className="h-4 w-4" />
@@ -337,10 +376,206 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
           </table>
           {loadingMore && <div className="flex justify-center py-4"><LoadingSpinner size="sm" /></div>}
         </div>
+        <div className="bg-gray-50 dark:bg-gray-700 px-6 py-3 border-t border-gray-200 dark:border-gray-600 text-right">
+          <span className="text-sm font-bold text-gray-900 dark:text-white">
+            Suma wartości netto (cała kategoria): {categoryTotalValue.toLocaleString('pl-PL', { minimumFractionDigits: 2 })} zł
+          </span>
+        </div>
       </div>
 
-      {/* MODALE POZOSTAJĄ BEZ ZMIAN... */}
-      {/* Tu wklej resztę swojego kodu dla Modal (dodawanie/edycja i OCR) */}
+      {/* MODAL DODAWANIA / EDYCJI */}
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => {
+          setShowAddModal(false);
+          resetEntryForm();
+        }}
+        title={editingEntry ? "Edytuj wpis w inwentaryzacji" : "Dodaj produkt do inwentaryzacji"}
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kategoria produktu *</label>
+            <select
+              value={newEntry.category_id || selectedCategory}
+              onChange={(e) => setNewEntry({...newEntry, category_id: e.target.value})}
+              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white"
+            >
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>{category.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PKU i W (opcjonalne)</label>
+            <input
+              type="text"
+              value={newEntry.pku_w}
+              onChange={(e) => setNewEntry({...newEntry, pku_w: e.target.value})}
+              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 rounded-md text-gray-900 dark:text-white"
+              placeholder="Kod PKU i W"
+            />
+          </div>
+
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nazwa produktu *</label>
+            <input
+              type="text"
+              value={newEntry.product_name}
+              onChange={(e) => {
+                setNewEntry({...newEntry, product_name: e.target.value});
+                handleBarcodeOrNameSearch(e.target.value);
+              }}
+              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 rounded-md text-gray-900 dark:text-white"
+              placeholder="Wpisz nazwę produktu..."
+            />
+            {productSuggestions.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto" onScroll={handleSuggestionScroll}>
+                {productSuggestions.map((product) => (
+                  <button key={product.id} onClick={() => selectProductSuggestion(product)} className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm">
+                    <div className="font-medium text-gray-900">{product.name}</div>
+                    <div className="text-xs text-gray-500">{product.barcode && `${product.barcode} • `}{product.unit} • {product.net_price?.toFixed(2) || '0.00'} zł</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jednostka miary</label>
+              <select
+                value={newEntry.unit}
+                onChange={(e) => setNewEntry({...newEntry, unit: e.target.value})}
+                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 rounded-md text-gray-900 dark:text-white"
+              >
+                {['szt', 'kg', 'g', 'l', 'ml', 'm', 'm2', 'm3', 'opak'].map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kod kreskowy</label>
+              <input
+                type="text"
+                value={newEntry.barcode}
+                onChange={(e) => {
+                  setNewEntry({...newEntry, barcode: e.target.value});
+                  handleBarcodeInput(e.target.value);
+                  handleBarcodeOrNameSearch(e.target.value);
+                }}
+                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 rounded-md text-gray-900 dark:text-white"
+                placeholder="Kod kreskowy"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ilość *</label>
+              <input
+                type="number"
+                step="0.001"
+                value={newEntry.quantity}
+                onChange={(e) => setNewEntry({...newEntry, quantity: parseFloat(e.target.value) || 0})}
+                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 rounded-md text-gray-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cena netto *</label>
+              <input
+                type="number"
+                step="0.01"
+                value={newEntry.net_price}
+                onChange={(e) => setNewEntry({...newEntry, net_price: parseFloat(e.target.value) || 0})}
+                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 rounded-md text-gray-900 dark:text-white"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Numer faktury/inwentu</label>
+            <input
+              type="text"
+              value={newEntry.invoice_number}
+              onChange={(e) => setNewEntry({...newEntry, invoice_number: e.target.value})}
+              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 rounded-md text-gray-900 dark:text-white"
+              placeholder="np. FV/2025/001"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Uwagi</label>
+            <textarea
+              value={newEntry.notes}
+              onChange={(e) => setNewEntry({...newEntry, notes: e.target.value})}
+              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 rounded-md text-gray-900 dark:text-white"
+              rows={2}
+            />
+          </div>
+
+          <div className="bg-gray-50 p-3 rounded-md">
+            <div className="text-sm text-gray-600">
+              Wartość netto: <span className="font-medium">{(newEntry.quantity * newEntry.net_price).toFixed(2)} zł</span>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <button onClick={() => { setShowAddModal(false); resetEntryForm(); }} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">Anuluj</button>
+            <button
+              onClick={handleSubmitEntry}
+              disabled={!newEntry.product_name || submitting}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {submitting ? 'Zapisywanie...' : (editingEntry ? "Zapisz zmiany" : "Dodaj do inwentaryzacji")}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL OCR */}
+      <Modal isOpen={showOCRModal} onClose={() => setShowOCRModal(false)} title="Rozpoznaj dane z dokumentu" size="md">
+        <OCRComponent onResult={handleOCRResult} />
+      </Modal>
+    </div>
+  );
+}
+
+// Komponent OCR (w tym samym pliku na dole)
+function OCRComponent({ onResult }: { onResult: (result: any) => void }) {
+  const { showToast } = useNotification();
+  const [file, setFile] = useState<File | null>(null);
+  const [processing, setProcessing] = useState(false);
+
+  const handleProcess = async () => {
+    if (!file) return;
+    setProcessing(true);
+    const result = await ocrService.processDocument(file);
+    setProcessing(false);
+    if (result) onResult(result);
+    else showToast('Błąd podczas przetwarzania dokumentu', 'error');
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Wybierz zdjęcie lub PDF</label>
+        <input
+          type="file"
+          accept="image/*,.pdf"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+        />
+      </div>
+      <div className="flex justify-end space-x-3 pt-4">
+        <button
+          onClick={handleProcess}
+          disabled={!file || processing}
+          className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 transition-colors"
+        >
+          {processing ? <LoadingSpinner size="sm" /> : <Camera className="h-4 w-4" />}
+          <span>{processing ? 'Przetwarzanie...' : 'Przetwórz dokument'}</span>
+        </button>
+      </div>
     </div>
   );
 }

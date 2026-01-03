@@ -129,7 +129,58 @@ export const entryService = {
       return null;
     }
   },
+// Wewnątrz obiektu entryService w pliku entryService.ts
 
+  async getCategoryStats(inventoryId: string, categoryId: string): Promise<{ count: number, totalValue: number }> {
+  try {
+    // 1. Pobieramy całkowitą liczbę rekordów (Supabase potrafi to zrobić jednym zapytaniem bez pobierania danych)
+    const { count, error: countError } = await supabase
+      .from('inventory_entries')
+      .select('*', { count: 'exact', head: true })
+      .eq('inventory_id', inventoryId)
+      .eq('category_id', categoryId);
+
+    if (countError) throw countError;
+
+    // 2. Sumowanie wartości netto (Musimy pobierać dane w pętli po 1000 rekordów, bo API nie wyśle więcej na raz)
+    let totalValue = 0;
+    let offset = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from('inventory_entries')
+        .select('net_value')
+        .eq('inventory_id', inventoryId)
+        .eq('category_id', categoryId)
+        .range(offset, offset + 999); // Pobieraj zakresy: 0-999, 1000-1999, itd.
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        // Dodaj wartości z aktualnej paczki (1000 sztuk) do sumy
+        totalValue += data.reduce((sum, item) => sum + (item.net_value || 0), 0);
+        
+        // Jeśli pobraliśmy dokładnie 1000, spróbuj pobrać kolejną paczkę
+        if (data.length === 1000) {
+          offset += 1000;
+        } else {
+          hasMore = false;
+        }
+      } else {
+        hasMore = false;
+      }
+    }
+
+    return { 
+      count: count || 0, 
+      totalValue 
+    };
+  } catch (error) {
+    console.error('Błąd podczas obliczania statystyk:', error);
+    return { count: 0, totalValue: 0 };
+  }
+},
   async deleteFinalEntry(id: string): Promise<boolean> {
     try {
       const { error } = await supabase.from('final_inventory_entries').delete().eq('id', id);

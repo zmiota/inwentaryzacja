@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 import { InventoryEntry, FinalInventoryEntry } from '../types';
 
 export const entryService = {
-  // Inwentaryzacja wstępna - POPRAWIONA FUNKCJA Z OBSŁUGĄ PAGINACJI
+  // Pobieranie wpisów z paginacją
   async getPreliminaryEntries(
     inventoryId: string, 
     categoryId?: string, 
@@ -19,8 +19,6 @@ export const entryService = {
         query = query.eq('category_id', categoryId);
       }
 
-      // RANGE jest kluczowe dla paginacji w Supabase
-      // offset to start, offset + limit - 1 to koniec (np. 0 do 249 dla pierwszej paczki)
       const { data, error } = await query
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
@@ -28,45 +26,81 @@ export const entryService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Błąd podczas pobierania wpisów wstępnych:', error);
+      console.error('Błąd getPreliminaryEntries:', error);
       return [];
     }
   },
 
-  // ... reszta funkcji (create, update, delete, getFinalEntries, itd.) pozostaje bez zmian ...
-  // Upewnij się tylko, że eksportujesz cały obiekt entryService tak jak wcześniej
-  async createPreliminaryEntry(entry: Omit<InventoryEntry, 'id' | 'net_value' | 'created_at' | 'updated_at'>): Promise<InventoryEntry | null> {
+  // Statystyki kategorii (Liczenie > 1000 rekordów)
+  async getCategoryStats(inventoryId: string, categoryId: string): Promise<{ count: number, totalValue: number }> {
     try {
-      const { data, error } = await supabase.from('inventory_entries').insert([entry]).select('*').single();
-      if (error) throw error;
-      return data;
+      const { count, error: countError } = await supabase
+        .from('inventory_entries')
+        .select('*', { count: 'exact', head: true })
+        .eq('inventory_id', inventoryId)
+        .eq('category_id', categoryId);
+
+      if (countError) throw countError;
+
+      let totalValue = 0;
+      let offset = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('inventory_entries')
+          .select('net_value')
+          .eq('inventory_id', inventoryId)
+          .eq('category_id', categoryId)
+          .range(offset, offset + 999);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          totalValue += data.reduce((sum, item) => sum + (item.net_value || 0), 0);
+          if (data.length === 1000) offset += 1000;
+          else hasMore = false;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return { count: count || 0, totalValue };
     } catch (error) {
-      console.error('Błąd:', error);
-      return null;
+      console.error('Błąd getCategoryStats:', error);
+      return { count: 0, totalValue: 0 };
     }
+  },
+
+  async createPreliminaryEntry(entry: Omit<InventoryEntry, 'id' | 'net_value' | 'created_at' | 'updated_at'>): Promise<InventoryEntry | null> {
+    const { data, error } = await supabase
+      .from('inventory_entries')
+      .insert([entry])
+      .select('*')
+      .single();
+    
+    if (error) throw error; // Wyrzucamy błąd do handleSubmitEntry
+    return data;
   },
 
   async updatePreliminaryEntry(id: string, updates: Partial<InventoryEntry>): Promise<InventoryEntry | null> {
-    try {
-      const { data, error } = await supabase.from('inventory_entries').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select('*').single();
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Błąd:', error);
-      return null;
-    }
+    const { data, error } = await supabase
+      .from('inventory_entries')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('*')
+      .single();
+    
+    if (error) throw error;
+    return data;
   },
 
   async deletePreliminaryEntry(id: string): Promise<boolean> {
-    try {
-      const { error } = await supabase.from('inventory_entries').delete().eq('id', id);
-      if (error) throw error;
-      return true;
-    } catch (error) {
-      console.error('Błąd:', error);
-      return false;
-    }
-  },
+    const { error } = await supabase.from('inventory_entries').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  }
+};
 
   async getFinalEntries(inventoryId: string): Promise<FinalInventoryEntry[]> {
     try {

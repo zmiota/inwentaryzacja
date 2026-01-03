@@ -91,12 +91,12 @@ export default function ProductManagement() {
     const data = await productService.search(
       activeSearchQuery || '', 
       selectedCategory, 
-      50, 
+      250, 
       offset
     );
 
     // Jeśli baza zwróciła mniej niż 50, znaczy że to ostatnia strona
-    setHasMore(data.length === 50);
+    setHasMore(data.length === 250);
 
     if (reset) {
       setProducts(data);

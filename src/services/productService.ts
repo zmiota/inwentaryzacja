@@ -9,7 +9,7 @@ export const productService = {
   async search(
     query: string = '',
     categoryId?: string,
-    limit: number = 50,
+    limit: number = 250,
     offset: number = 0
   ): Promise<Product[]> {
     try {

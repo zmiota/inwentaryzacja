@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Camera, Search, Trash2, CreditCard as Edit, Barcode } from 'lucide-react';
+import { ArrowLeft, Plus, Camera, Search, Trash2, CreditCard as Edit, Barcode, Package } from 'lucide-react';
 import { Category, InventoryEntry, Product } from '../types';
 import { categoryService } from '../services/categoryService';
 import { entryService } from '../services/entryService';
@@ -20,6 +20,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [entries, setEntries] = useState<InventoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categoryProductCount, setCategoryProductCount] = useState(0); // Nowy stan licznika
   const [showAddModal, setShowAddModal] = useState(false);
   const [showOCRModal, setShowOCRModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<InventoryEntry | null>(null);
@@ -44,9 +45,11 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     loadCategories();
   }, []);
 
+  // Aktualizacja wpisów i licznika przy zmianie kategorii
   useEffect(() => {
     if (selectedCategory) {
       loadEntries();
+      updateCategoryCount();
     }
   }, [selectedCategory, inventoryId]);
 
@@ -63,6 +66,13 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     if (!selectedCategory) return;
     const data = await entryService.getPreliminaryEntries(inventoryId, selectedCategory);
     setEntries(data);
+  };
+
+  // Nowa funkcja pobierająca liczbę produktów w kategorii
+  const updateCategoryCount = async () => {
+    if (!selectedCategory) return;
+    const count = await productService.getCount(undefined, selectedCategory);
+    setCategoryProductCount(count);
   };
 
   const resetEntryForm = () => {
@@ -231,6 +241,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       setShowAddModal(false);
       resetEntryForm();
       await loadEntries();
+      await updateCategoryCount(); // Odświeżenie licznika po dodaniu/aktualizacji produktu
     } catch (error) {
       showToast('Wystąpił błąd podczas dodawania produktu', 'error');
     } finally {
@@ -267,6 +278,14 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
   const totalValue = entries.reduce((sum, entry) => sum + entry.net_value, 0);
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <LoadingSpinner size="lg" text="Ładowanie..." />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -277,7 +296,17 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Inwentaryzacja wstępna</h1>
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Inwentaryzacja wstępna</h1>
+            
+            {/* DODANY LICZNIK PRODUKTÓW */}
+            <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-md">
+              <Package className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Produktów w kategorii: <span className="font-bold text-gray-900 dark:text-white">{categoryProductCount}</span>
+              </span>
+            </div>
+          </div>
         </div>
         
         <div className="flex space-x-2">
@@ -323,7 +352,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
       <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            Produkty - {categories.find(c => c.id === selectedCategory)?.name}
+            Produkty - {categories.find(c => c.id === selectedCategory)?.name} ({entries.length})
           </h3>
         </div>
         
@@ -501,7 +530,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
                     onClick={() => selectProductSuggestion(product)}
                     className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm"
                   >
-                    <div className="font-medium">{product.name}</div>
+                    <div className="font-medium text-gray-900">{product.name}</div>
                     <div className="text-xs text-gray-500">
                       {product.barcode && `${product.barcode} • `}
                       {product.unit} • {product.net_price?.toFixed(2) || '0.00'} zł
@@ -652,6 +681,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
 // Komponent OCR
 function OCRComponent({ onResult }: { onResult: (result: any) => void }) {
+  const { showToast } = useNotification();
   const [file, setFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState(false);
 
@@ -692,7 +722,7 @@ function OCRComponent({ onResult }: { onResult: (result: any) => void }) {
 
       {file && (
         <div className="p-3 bg-gray-50 rounded-md">
-          <div className="text-sm">
+          <div className="text-sm text-gray-900">
             <strong>Wybrany plik:</strong> {file.name}
           </div>
           <div className="text-xs text-gray-500">

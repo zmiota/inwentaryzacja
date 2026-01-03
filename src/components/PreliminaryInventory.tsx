@@ -137,30 +137,57 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     setSubmitting(true);
 
     try {
+      // 1. Przygotowanie danych
+      const entryData = {
+        inventory_id: inventoryId,
+        category_id: categoryToUse,
+        product_name: newEntry.product_name,
+        pku_w: newEntry.pku_w || null,
+        unit: newEntry.unit,
+        quantity: newEntry.quantity,
+        net_price: newEntry.net_price,
+        barcode: newEntry.barcode || null,
+        invoice_number: newEntry.invoice_number || null,
+        notes: newEntry.notes || null
+      };
+
+      // 2. Zapis do inwentaryzacji (To się udaje, ale mogło blokować resztę)
       if (editingEntry) {
-        await entryService.updatePreliminaryEntry(editingEntry.id, { ...newEntry, category_id: categoryToUse });
+        await entryService.updatePreliminaryEntry(editingEntry.id, entryData);
       } else {
-        await entryService.createPreliminaryEntry({ inventory_id: inventoryId, category_id: categoryToUse, ...newEntry });
+        await entryService.createPreliminaryEntry(entryData);
       }
 
-      await productService.createOrUpdate({
-        name: newEntry.product_name,
-        barcode: newEntry.barcode || undefined,
-        unit: newEntry.unit,
-        net_price: newEntry.net_price,
-        category_id: categoryToUse,
-        pku_w: newEntry.pku_w || undefined,
-        invoice_number: newEntry.invoice_number || undefined,
-        notes: newEntry.notes || undefined
-      });
+      // 3. Próba aktualizacji bazy produktów (Osobny try-catch!)
+      // Często tutaj leci błąd, np. gdy produkt o takim kodzie kreskowym już istnieje
+      try {
+        await productService.createOrUpdate({
+          name: newEntry.product_name,
+          barcode: newEntry.barcode || undefined,
+          unit: newEntry.unit,
+          net_price: newEntry.net_price,
+          category_id: categoryToUse,
+          pku_w: newEntry.pku_w || undefined,
+          invoice_number: newEntry.invoice_number || undefined,
+          notes: newEntry.notes || undefined
+        });
+      } catch (prodError) {
+        console.warn('Wpis dodany, ale nie udało się zsynchronizować bazy produktów:', prodError);
+        // Nie przerywamy działania, tylko logujemy ostrzeżenie
+      }
 
-      showToast('Zapisano pomyślnie', 'success');
+      // 4. Sukces i wymuszenie odświeżenia widoku
+      showToast(editingEntry ? 'Zaktualizowano wpis' : 'Dodano do inwentaryzacji', 'success');
       setShowAddModal(false);
       resetEntryForm();
+      
+      // Odświeżamy dane (to teraz wykona się zawsze)
       await loadEntries(true);
-      await updateCategoryStats(); 
-    } catch (error) {
-      showToast('Błąd zapisu', 'error');
+      await updateCategoryStats();
+
+    } catch (error: any) {
+      console.error('Błąd krytyczny zapisu:', error);
+      showToast(`Błąd zapisu: ${error.message || 'Problem z połączeniem'}`, 'error');
     } finally {
       setSubmitting(false);
     }

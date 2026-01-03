@@ -131,13 +131,13 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     setHasMoreSuggestions(true);
   };
 
-  const handleSubmitEntry = async () => {
+const handleSubmitEntry = async () => {
     if (!newEntry.product_name || !selectedCategory || submitting) return;
     const categoryToUse = newEntry.category_id || selectedCategory;
     setSubmitting(true);
 
     try {
-      // 1. Przygotowanie danych
+      // 1. Zapis do inwentaryzacji wstępnej (inventory_entries)
       const entryData = {
         inventory_id: inventoryId,
         category_id: categoryToUse,
@@ -151,18 +151,17 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
         notes: newEntry.notes || null
       };
 
-      // 2. Zapis do inwentaryzacji (To się udaje, ale mogło blokować resztę)
       if (editingEntry) {
         await entryService.updatePreliminaryEntry(editingEntry.id, entryData);
       } else {
         await entryService.createPreliminaryEntry(entryData);
       }
 
-      // 3. Próba aktualizacji bazy produktów (Osobny try-catch!)
-      // Często tutaj leci błąd, np. gdy produkt o takim kodzie kreskowym już istnieje
+      // 2. Synchronizacja z główną bazą produktów (products)
       try {
-        await productService.createOrUpdate({
-          name: newEntry.product_name,
+        // Upewniamy się, że przesyłamy obiekt o strukturze, której oczekuje productService
+        const productData = {
+          name: newEntry.product_name, // Sprawdź czy Twój serwis oczekuje 'name' czy 'product_name'
           barcode: newEntry.barcode || undefined,
           unit: newEntry.unit,
           net_price: newEntry.net_price,
@@ -170,24 +169,28 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
           pku_w: newEntry.pku_w || undefined,
           invoice_number: newEntry.invoice_number || undefined,
           notes: newEntry.notes || undefined
-        });
-      } catch (prodError) {
-        console.warn('Wpis dodany, ale nie udało się zsynchronizować bazy produktów:', prodError);
-        // Nie przerywamy działania, tylko logujemy ostrzeżenie
+        };
+
+        await productService.createOrUpdate(productData);
+      } catch (prodError: any) {
+        console.error('Błąd synchronizacji z bazą produktów:', prodError);
+        // Jeśli to błąd duplikatu, poinformuj o tym, ale nie blokuj inwentaryzacji
+        if (prodError.message?.includes('duplicate')) {
+          showToast('Produkt już istnieje w bazie (zaktualizowano dane)', 'info');
+        } else {
+          showToast('Wpis dodany, ale wystąpił problem z aktualizacją bazy produktów', 'warning');
+        }
       }
 
-      // 4. Sukces i wymuszenie odświeżenia widoku
-      showToast(editingEntry ? 'Zaktualizowano wpis' : 'Dodano do inwentaryzacji', 'success');
+      showToast('Zapisano pomyślnie', 'success');
       setShowAddModal(false);
       resetEntryForm();
-      
-      // Odświeżamy dane (to teraz wykona się zawsze)
       await loadEntries(true);
       await updateCategoryStats();
 
     } catch (error: any) {
-      console.error('Błąd krytyczny zapisu:', error);
-      showToast(`Błąd zapisu: ${error.message || 'Problem z połączeniem'}`, 'error');
+      console.error('Błąd krytyczny:', error);
+      showToast(`Błąd zapisu: ${error.message}`, 'error');
     } finally {
       setSubmitting(false);
     }

@@ -96,8 +96,8 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
 
     try {
       const currentOffset = reset ? 0 : entries.length;
-      const data = await entryService.getPreliminaryEntries(inventoryId, selectedCategory, 50, currentOffset);
-      setHasMore(data.length === 50);
+      const data = await entryService.getPreliminaryEntries(inventoryId, selectedCategory, 250, currentOffset);
+      setHasMore(data.length === 250);
 
       if (reset) {
         setEntries(data);
@@ -176,7 +176,7 @@ export default function PreliminaryInventory({ inventoryId, onNavigate }: Prelim
     if (value.length >= 2) {
       setSuggestionOffset(0);
       setHasMoreSuggestions(true);
-      const suggestions = await productService.search(value, newEntry.category_id || selectedCategory, 50, 0);
+      const suggestions = await productService.search(value, newEntry.category_id || selectedCategory, 250, 0);
       setProductSuggestions(suggestions);
       setHasMoreSuggestions(suggestions.length === 50);
     } else {

@@ -104,7 +104,7 @@ export const entryService = {
     return true;
   },
 
-  // 6. Inwentaryzacja końcowa - Pobieranie z paginacją
+  // 6. Inwentaryzacja końcowa - Pobieranie Z PAGINACJĄ
   async getFinalEntries(
     inventoryId: string,
     limit: number = 250,
@@ -126,7 +126,7 @@ export const entryService = {
     }
   },
 
-  // 6a. Statystyki inwentaryzacji końcowej (całość)
+  // 6a. Statystyki inwentaryzacji końcowej (całość dla stopki)
   async getFinalInventoryStats(inventoryId: string): Promise<{ count: number, totalValue: number }> {
     try {
       const { count, error: countError } = await supabase
@@ -165,21 +165,37 @@ export const entryService = {
     }
   },
 
-  // 7. Generowanie raportu końcowego
+  // 7. Generowanie raportu końcowego - TUTAJ TEŻ POPRAWIONO POBIERANIE (obsługa > 1000 pozycji wstępnych)
   async generateFinalFromPreliminary(inventoryId: string): Promise<boolean> {
-    const { data: preliminaryEntries, error: fetchError } = await supabase
-      .from('inventory_entries')
-      .select('*')
-      .eq('inventory_id', inventoryId)
-      .order('category_id', { ascending: true });
+    // Pobieramy wszystkie wpisy wstępne partiami
+    let allPreliminaryEntries: any[] = [];
+    let offset = 0;
+    let hasMore = true;
 
-    if (fetchError) throw fetchError;
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from('inventory_entries')
+        .select('*')
+        .eq('inventory_id', inventoryId)
+        .order('category_id', { ascending: true })
+        .range(offset, offset + 999);
 
+      if (error) throw error;
+      if (data && data.length > 0) {
+        allPreliminaryEntries = [...allPreliminaryEntries, ...data];
+        if (data.length === 1000) offset += 1000;
+        else hasMore = false;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    // Czyścimy starą inwentaryzację końcową
     await supabase.from('final_inventory_entries').delete().eq('inventory_id', inventoryId);
 
-    if (!preliminaryEntries || preliminaryEntries.length === 0) return true;
+    if (allPreliminaryEntries.length === 0) return true;
 
-    const finalEntries = preliminaryEntries.map((entry, index) => ({
+    const finalEntries = allPreliminaryEntries.map((entry, index) => ({
       inventory_id: inventoryId,
       sequence_number: index + 1,
       product_name: entry.product_name,
@@ -193,8 +209,13 @@ export const entryService = {
       category_id: entry.category_id || null,
     }));
 
-    const { error: insertError } = await supabase.from('final_inventory_entries').insert(finalEntries);
-    if (insertError) throw insertError;
+    // Wstawiamy partiami (Supabase ma limity wielkości inserta)
+    for (let i = 0; i < finalEntries.length; i += 500) {
+      const chunk = finalEntries.slice(i, i + 500);
+      const { error: insertError } = await supabase.from('final_inventory_entries').insert(chunk);
+      if (insertError) throw insertError;
+    }
+
     return true;
   },
 

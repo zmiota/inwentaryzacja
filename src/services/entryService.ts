@@ -104,16 +104,65 @@ export const entryService = {
     return true;
   },
 
-  // 6. Inwentaryzacja końcowa - Pobieranie
-  async getFinalEntries(inventoryId: string): Promise<FinalInventoryEntry[]> {
-    const { data, error } = await supabase
-      .from('final_inventory_entries')
-      .select('*')
-      .eq('inventory_id', inventoryId)
-      .order('sequence_number');
-    
-    if (error) throw error;
-    return data || [];
+  // 6. Inwentaryzacja końcowa - Pobieranie z paginacją
+  async getFinalEntries(
+    inventoryId: string,
+    limit: number = 250,
+    offset: number = 0
+  ): Promise<FinalInventoryEntry[]> {
+    try {
+      const { data, error } = await supabase
+        .from('final_inventory_entries')
+        .select('*')
+        .eq('inventory_id', inventoryId)
+        .order('sequence_number', { ascending: true })
+        .range(offset, offset + limit - 1);
+      
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Błąd getFinalEntries:', error);
+      return [];
+    }
+  },
+
+  // 6a. Statystyki inwentaryzacji końcowej (całość)
+  async getFinalInventoryStats(inventoryId: string): Promise<{ count: number, totalValue: number }> {
+    try {
+      const { count, error: countError } = await supabase
+        .from('final_inventory_entries')
+        .select('*', { count: 'exact', head: true })
+        .eq('inventory_id', inventoryId);
+
+      if (countError) throw countError;
+
+      let totalValue = 0;
+      let offset = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('final_inventory_entries')
+          .select('net_value')
+          .eq('inventory_id', inventoryId)
+          .range(offset, offset + 999);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          totalValue += data.reduce((sum, item) => sum + (item.net_value || 0), 0);
+          if (data.length === 1000) offset += 1000;
+          else hasMore = false;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return { count: count || 0, totalValue };
+    } catch (error) {
+      console.error('Błąd getFinalInventoryStats:', error);
+      return { count: 0, totalValue: 0 };
+    }
   },
 
   // 7. Generowanie raportu końcowego

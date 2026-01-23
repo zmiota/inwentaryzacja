@@ -34,30 +34,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (login: string, password: string) => {
-    const { data, error } = await supabase
-      .from('app_users')
-      .select('*')
-      .eq('login', login)
-      .eq('password_hash', password)
-      .maybeSingle();
+    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-login`;
 
-    if (error) throw error;
-    if (!data) throw new Error('Nieprawidłowy login lub hasło');
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ login, password }),
+    });
 
-    const appUser: AppUser = {
-      id: data.id,
-      login: data.login,
-      full_name: data.full_name,
-      is_admin: data.is_admin
-    };
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'Błąd logowania');
+    }
+
+    const appUser: AppUser = result.user;
+    const token = result.token;
 
     setUser(appUser);
     localStorage.setItem('app_user', JSON.stringify(appUser));
+    localStorage.setItem('app_token', token);
   };
 
   const signOut = () => {
     setUser(null);
     localStorage.removeItem('app_user');
+    localStorage.removeItem('app_token');
   };
 
   return (

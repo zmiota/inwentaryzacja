@@ -63,16 +63,27 @@ export default function UserManagement() {
     }
 
     try {
-      const { error } = await supabase
-        .from('app_users')
-        .insert([{
-          login: newUser.login,
-          password_hash: newUser.password,
-          full_name: newUser.full_name,
-          is_admin: newUser.is_admin
-        }]);
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-register`;
 
-      if (error) throw error;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          login: newUser.login,
+          password: newUser.password,
+          full_name: newUser.full_name,
+          is_admin: newUser.is_admin,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Błąd podczas tworzenia użytkownika');
+      }
 
       setShowCreateModal(false);
       setNewUser({ login: '', password: '', full_name: '', is_admin: false });
@@ -100,22 +111,27 @@ export default function UserManagement() {
     if (!editingUser) return;
 
     try {
-      const updateData: any = {
-        full_name: editForm.full_name,
-        is_admin: editForm.is_admin,
-        updated_at: new Date().toISOString()
-      };
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-update-user`;
 
-      if (editForm.password) {
-        updateData.password_hash = editForm.password;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          userId: editingUser.id,
+          full_name: editForm.full_name,
+          password: editForm.password || undefined,
+          is_admin: editForm.is_admin,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Błąd podczas aktualizacji użytkownika');
       }
-
-      const { error } = await supabase
-        .from('app_users')
-        .update(updateData)
-        .eq('id', editingUser.id);
-
-      if (error) throw error;
 
       setShowEditModal(false);
       setEditingUser(null);

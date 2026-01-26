@@ -31,6 +31,8 @@
 - ✅ **Automatyczne Triggery** - Audit dla INSERT/UPDATE/DELETE na wszystkich tabelach
 - ✅ **IP Tracking** - Śledzenie adresów IP
 - ✅ **User Actions** - Logowanie działań użytkowników (LOGIN, REGISTER, PASSWORD_MIGRATION)
+- ✅ **Automatyczne Czyszczenie** - Logi starsze niż 72h usuwane automatycznie (codziennie o 3:00)
+- ✅ **Retencja Danych** - 72 godziny (3 dni) historii
 
 #### 5. Walidacja i Rate Limiting (WYSOKIE - CZĘŚCIOWO ZAŁATANE)
 - ✅ **Walidacja długości hasła** - Minimum 6 znaków
@@ -106,12 +108,13 @@ Zobacz `MIGRATION_GUIDE.md` dla szczegółów:
 1. ✅ Dodane indeksy na wszystkich FK
 2. ✅ Dodane CHECK constraints
 3. ✅ Dodane automatyczne triggery
-4. ✅ Dodany audit logging
+4. ✅ Dodany audit logging z automatycznym czyszczeniem
 5. ✅ Dodana walidacja formatu login
 6. ✅ Migracja do hashowanych haseł (bcrypt)
 7. ✅ Implementacja JWT tokens
 8. ✅ Rate limiting na login (built-in Edge Functions)
 9. ✅ Session management z tokenami
+10. ✅ Automatyczne czyszczenie audit logów (retencja 72h)
 
 ## Obecny Stan Bezpieczeństwa ⭐ DOSKONAŁY
 
@@ -135,6 +138,8 @@ Zobacz `MIGRATION_GUIDE.md` dla szczegółów:
 - ✅ IP tracking
 - ✅ Automatyczne triggery
 - ✅ Historia wszystkich zmian
+- ✅ Automatyczne czyszczenie (72h retencja)
+- ✅ Scheduled jobs (pg_cron)
 
 **Architektura:**
 - ✅ Edge Functions dla krytycznych operacji

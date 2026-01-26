@@ -55,11 +55,16 @@ System inwentaryzacji został w pełni zabezpieczony. Poniżej znajdziesz podsum
 - Tracking IP address
 - Historia INSERT/UPDATE/DELETE
 - Logowanie działań użytkowników (LOGIN, REGISTER, itp.)
+- Automatyczne czyszczenie starych logów (>72h)
+- Scheduled job - codziennie o 3:00
 
-**Migracja:**
+**Migracje:**
 - `20260123104832_add_audit_log_and_security_improvements.sql`
+- `add_audit_log_cleanup.sql`
 
 **Tabela:** `audit_log`
+
+**Retencja:** Logi przechowywane przez 72 godziny (3 dni)
 
 ---
 
@@ -164,6 +169,12 @@ System inwentaryzacji został w pełni zabezpieczony. Poniżej znajdziesz podsum
 - Kolumna password_is_hashed
 - Function migrate_password_to_bcrypt
 
+### 3. add_audit_log_cleanup.sql
+- Automatyczne czyszczenie starych logów (>72h)
+- Funkcja cleanup_old_audit_logs()
+- Zaplanowane zadanie cron (codziennie o 3:00)
+- Extension pg_cron
+
 ---
 
 ## Jak Używać
@@ -237,6 +248,26 @@ SELECT
   created_at
 FROM app_users
 ORDER BY created_at DESC;
+```
+
+### Sprawdź Logi Czyszczenia Audytu
+
+```sql
+SELECT
+  action,
+  new_data->>'deleted_count' as deleted_count,
+  created_at
+FROM audit_log
+WHERE action = 'AUDIT_CLEANUP'
+ORDER BY created_at DESC
+LIMIT 10;
+```
+
+### Ręczne Czyszczenie Audytu (opcjonalne)
+
+```sql
+-- Wywołaj funkcję czyszczenia ręcznie
+SELECT cleanup_old_audit_logs();
 ```
 
 ---

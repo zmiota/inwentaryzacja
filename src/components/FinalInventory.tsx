@@ -292,6 +292,17 @@ export default function FinalInventory({ inventoryId, onNavigate }: FinalInvento
             </select>
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">PKU i W (opcjonalne)</label>
+            <input
+              type="text"
+              value={newEntry.pku_w}
+              onChange={(e) => setNewEntry({...newEntry, pku_w: e.target.value})}
+              maxLength={50}
+              className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 rounded-md text-gray-900 dark:text-white"
+              placeholder="Kod PKU i W (maks. 50 znaków)"
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nazwa produktu *</label>
             <input
               type="text"
@@ -336,7 +347,7 @@ function FinalInventoryRow({ entry, isEditing, onEdit, onSave, onCancel, onDelet
     return (
       <tr className="bg-blue-50 dark:bg-blue-900/30">
         <td className="px-6 py-4 text-sm">{entry.sequence_number}</td>
-        <td className="px-6 py-4"><input type="text" value={editData.pku_w} onChange={(e) => setEditData({...editData, pku_w: e.target.value})} className="w-full border rounded text-xs p-1" /></td>
+        <td className="px-6 py-4"><input type="text" value={editData.pku_w} onChange={(e) => setEditData({...editData, pku_w: e.target.value})} maxLength={50} className="w-full border rounded text-xs p-1" /></td>
         <td className="px-6 py-4"><input type="text" value={editData.product_name} onChange={(e) => setEditData({...editData, product_name: e.target.value})} className="w-full border rounded text-xs p-1" /></td>
         <td className="px-6 py-4"><input type="text" value={editData.barcode} onChange={(e) => setEditData({...editData, barcode: e.target.value})} className="w-full border rounded text-xs p-1" /></td>
         <td className="px-6 py-4"><input type="text" value={editData.unit} onChange={(e) => setEditData({...editData, unit: e.target.value})} className="w-full border rounded text-xs p-1" /></td>

@@ -442,10 +442,21 @@ const handleSubmitEntry = async () => {
             <input
               type="text"
               value={newEntry.pku_w}
-              onChange={(e) => setNewEntry({...newEntry, pku_w: e.target.value})}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.length <= 50) {
+                  setNewEntry({...newEntry, pku_w: value});
+                } else {
+                  showToast('Kod PKU i W może mieć maksymalnie 50 znaków', 'warning');
+                }
+              }}
+              maxLength={50}
               className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 rounded-md text-gray-900 dark:text-white"
-              placeholder="Kod PKU i W"
+              placeholder="Kod PKU i W (maks. 50 znaków)"
             />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {newEntry.pku_w.length}/50 znaków
+            </p>
           </div>
 
           <div className="relative">

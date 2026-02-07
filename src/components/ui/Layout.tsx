@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { ClipboardList, Package, Users, LogOut, Moon, Sun } from 'lucide-react';
+import { ClipboardList, Package, Tag, Users, LogOut, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -16,6 +16,7 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
   const navItems = [
     { id: 'inventories', label: 'Inwentaryzacje', icon: ClipboardList },
     { id: 'products', label: 'Produkty', icon: Package },
+    { id: 'categories', label: 'Kategorie', icon: Tag },
   ];
 
   if (user?.is_admin) {

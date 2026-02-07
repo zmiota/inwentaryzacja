@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Layout from './components/ui/Layout';
 import InventoryList from './components/InventoryList';
 import ProductManagement from './components/ProductManagement';
+import CategoryManagement from './components/CategoryManagement';
 import PreliminaryInventory from './components/PreliminaryInventory';
 import FinalInventory from './components/FinalInventory';
 import UserManagement from './components/UserManagement';
@@ -43,6 +44,8 @@ function AppContent() {
         return <InventoryList onNavigate={handleNavigate} />;
       case 'products':
         return <ProductManagement />;
+      case 'categories':
+        return <CategoryManagement />;
       case 'preliminary':
         return currentInventoryId ? (
           <PreliminaryInventory

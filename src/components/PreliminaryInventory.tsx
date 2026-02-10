@@ -504,6 +504,7 @@ const handleSubmitEntry = async () => {
                   handleBarcodeInput(e.target.value);
                   handleBarcodeOrNameSearch(e.target.value);
                 }}
+                maxLength={23}
                 className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 rounded-md text-gray-900 dark:text-white"
                 placeholder="Kod kreskowy"
               />

@@ -458,6 +458,7 @@ export default function ProductManagement() {
               type="text"
               value={newProduct.pku_w}
               onChange={(e) => setNewProduct({...newProduct, pku_w: e.target.value})}
+              maxLength={20}
               className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
               placeholder="Kod PKU i W"
             />
@@ -493,6 +494,7 @@ export default function ProductManagement() {
                 type="text"
                 value={newProduct.barcode}
                 onChange={(e) => setNewProduct({...newProduct, barcode: e.target.value})}
+                maxLength={23}
                 className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
                 placeholder="Kod kreskowy produktu"
               />

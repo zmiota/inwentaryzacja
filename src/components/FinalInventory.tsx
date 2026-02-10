@@ -357,7 +357,7 @@ function FinalInventoryRow({ entry, isEditing, onEdit, onSave, onCancel, onDelet
         <td className="px-6 py-4 text-sm">{entry.sequence_number}</td>
         <td className="px-6 py-4"><input type="text" value={editData.pku_w} onChange={(e) => setEditData({...editData, pku_w: e.target.value})} maxLength={20} className="w-full border rounded text-xs p-1" /></td>
         <td className="px-6 py-4"><input type="text" value={editData.product_name} onChange={(e) => setEditData({...editData, product_name: e.target.value})} className="w-full border rounded text-xs p-1" /></td>
-        <td className="px-6 py-4"><input type="text" value={editData.barcode} onChange={(e) => setEditData({...editData, barcode: e.target.value})} className="w-full border rounded text-xs p-1" /></td>
+        <td className="px-6 py-4"><input type="text" value={editData.barcode} onChange={(e) => setEditData({...editData, barcode: e.target.value})} maxLength={23} className="w-full border rounded text-xs p-1" /></td>
         <td className="px-6 py-4"><input type="text" value={editData.unit} onChange={(e) => setEditData({...editData, unit: e.target.value})} className="w-full border rounded text-xs p-1" /></td>
         <td className="px-6 py-4"><input type="number" step="0.001" value={editData.quantity} onChange={(e) => setEditData({...editData, quantity: parseFloat(e.target.value) || 0})} className="w-full border rounded text-xs p-1" /></td>
         <td className="px-6 py-4"><input type="number" step="0.01" value={editData.net_price} onChange={(e) => setEditData({...editData, net_price: parseFloat(e.target.value) || 0})} className="w-full border rounded text-xs p-1" /></td>
